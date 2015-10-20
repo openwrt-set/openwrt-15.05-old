@@ -1,0 +1,29 @@
+commit f55c02be6eeeca506fd6e132a42d0f3a22d4fc64
+Author: Nikita Nazarenko <nnazarenko@radiofid.ru>
+Date:   Tue Mar 3 16:48:10 2015 +0300
+
+    usb: option: add WeTelecom WPD-600 module
+
+diff --git a/drivers/usb/serial/option.c b/drivers/usb/serial/option.c
+index 54ead24..3d9ec15 100644
+--- a/drivers/usb/serial/option.c
++++ b/drivers/usb/serial/option.c
+@@ -101,6 +101,10 @@ static void option_instat_callback(struct urb *urb);
+ #define YISO_VENDOR_ID				0x0EAB
+ #define YISO_PRODUCT_U893			0xC893
+ 
++/* WeTelecom PRODUCTS */
++#define WETELECOM_VENDOR_ID			0x22DE
++#define WETELECOM_WPD_600			0x9070
++
+ /*
+  * NOVATEL WIRELESS PRODUCTS
+  *
+@@ -1761,6 +1765,7 @@ static const struct usb_device_id option_ids[] = {
+ 	{ USB_DEVICE_AND_INTERFACE_INFO(0x07d1, 0x3e02, 0xff, 0xff, 0xff) }, /* D-Link DWM-156/C1 */
+ 	{ USB_DEVICE(INOVIA_VENDOR_ID, INOVIA_SEW858) },
+ 	{ USB_DEVICE(VIATELECOM_VENDOR_ID, VIATELECOM_PRODUCT_CDS7) },
++	{ USB_DEVICE(WETELECOM_VENDOR_ID, WETELECOM_WPD_600) },
+ 	{ } /* Terminating entry */
+ };
+ MODULE_DEVICE_TABLE(usb, option_ids);

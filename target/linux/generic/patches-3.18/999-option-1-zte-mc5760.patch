@@ -1,0 +1,27 @@
+commit 8a6dfc4d86a7f50cc7e5f93dc056b085c9aa7235
+Author: Nikita Nazarenko <nnazarenko@radiofid.ru>
+Date:   Fri Mar 6 15:39:22 2015 +0300
+
+    option: add zte mc5716 pid
+
+diff --git a/drivers/usb/serial/option.c b/drivers/usb/serial/option.c
+index a686a4c8..4267e2e 100644
+--- a/drivers/usb/serial/option.c
++++ b/drivers/usb/serial/option.c
+@@ -287,6 +287,7 @@ static void option_instat_callback(struct urb *urb);
+ #define ZTE_PRODUCT_MC2718			0xffe8
+ #define ZTE_PRODUCT_AD3812			0xffeb
+ #define ZTE_PRODUCT_MC2716			0xffed
++#define ZTE_PRODUCT_MC5716			0xffff
+ 
+ #define BENQ_VENDOR_ID				0x04a5
+ #define BENQ_PRODUCT_H10			0x4068
+@@ -1590,6 +1591,7 @@ static const struct usb_device_id option_ids[] = {
+ 	{ USB_VENDOR_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0xff, 0x02, 0x01) },
+ 	{ USB_VENDOR_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0xff, 0x02, 0x05) },
+ 	{ USB_VENDOR_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0xff, 0x86, 0x10) },
++	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, ZTE_PRODUCT_MC5716, 0xff, 0xff, 0xff) },
+ 
+ 	{ USB_DEVICE(BENQ_VENDOR_ID, BENQ_PRODUCT_H10) },
+ 	{ USB_DEVICE(DLINK_VENDOR_ID, DLINK_PRODUCT_DWM_652) },
+
