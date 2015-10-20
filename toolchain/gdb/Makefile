@@ -23,6 +23,7 @@ define Host/Configure
 	(cd $(HOST_BUILD_DIR); \
 		gdb_cv_func_sigsetjmp=yes \
 		CFLAGS="-O2" \
+		LDFLAGS+="-lncurses -ltermcap" \
 		$(HOST_BUILD_DIR)/configure \
 		--prefix=$(TOOLCHAIN_DIR) \
 		--build=$(GNU_HOST_NAME) \
