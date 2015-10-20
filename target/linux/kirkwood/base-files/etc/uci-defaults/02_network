@@ -55,6 +55,12 @@ case "$board" in
 "sheevaplug-esata")
 	set_lan_dhcp "eth0"
 	;;
+"irz_kw04")
+	ucidef_set_interfaces_lan_wan "eth0.1" "eth1.2"
+	ucidef_add_switch "switch0" "1" "1"
+	ucidef_add_switch_vlan "switch0" "1" "1 2 3 4 5t"
+	ucidef_add_switch_vlan "switch0" "2" "0 6t"
+	;;
 *)
 	ucidef_set_interface_lan "eth0"
 	;;

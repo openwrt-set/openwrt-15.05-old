@@ -164,6 +164,10 @@ Image/InstallKernel/Template/GuruplugServerPlus=$(call Image/InstallKernel/Templ
 Image/BuildKernel/Template/Topkick1281P2=$(call Image/BuildKernel/Template,topkick)
 Image/InstallKernel/Template/Topkick1281P2=$(call Image/InstallKernel/Template,topkick)
 
+Image/BuildKernel/Template/IRZ_KW04=$(call Image/BuildKernel/Template,irz_kw04)
+Image/InstallKernel/Template/IRZ_KW04=$(call Image/InstallKernel/Template,irz_kw04)
+Image/Prepare/Template/IRZ_KW04=$(call Image/Prepare/Template,irz_kw04)
+
 define Image/BuildKernel
 	$(call Image/BuildKernel/Template/$(PROFILE))
 endef

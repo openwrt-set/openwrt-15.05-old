@@ -57,6 +57,10 @@ kirkwood_board_detect() {
 		name="sheevaplug-esata"
 		;;
 
+	"iRZ KW04 board")
+		name="irz_kw04"
+		;;
+
 	*)
 		name="generic"
 		;;

@@ -15,6 +15,9 @@ get_status_led() {
 	ea4500)
 		status_led="ea4500:white:health"
 		;;
+	irz_kw04)
+		status_led="PWR_GREEN"
+		;;
 	esac
 }
 

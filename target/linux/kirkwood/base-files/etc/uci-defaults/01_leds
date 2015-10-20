@@ -40,6 +40,9 @@ case "$board" in
 "sheevaplug-esata")
 	ucidef_set_led_timer "health" "health" "sheevaplug:blue:health" "200" "800"
 	;;
+"irz_kw04")
+	ucidef_set_led_default "health" "health" "PWR_GREEN" "1"
+	ucidef_set_led_default "fault" "fault" "PWR_RED" "1"
 *)
 	;;
 esac

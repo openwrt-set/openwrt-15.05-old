@@ -1,0 +1,387 @@
+/dts-v1/;
+
+#include "kirkwood.dtsi"
+#include "kirkwood-6281.dtsi"
+
+/ {
+	model = "iRZ KW04 board";
+	compatible = "irz,kw04", "marvell,kirkwood-88f6281", "marvell,kirkwood";
+
+	memory {
+		device_type = "memory";
+		reg = <0x00000000 0x8000000>;
+	};
+
+	chosen {
+		bootargs = "";
+	};
+
+	mbus {
+		pcie-controller {
+			status = "okay";
+
+			pcie@1,0 {
+				status = "okay";
+			};
+		};
+	};
+
+	ocp@f1000000 {
+		pinctrl: pin-controller@10000 {
+			pmx_usb_power: pmx-usb-power {
+				marvell,pins = "mpp48";
+				marvell,function = "gpio";
+			};
+			pmx_rede: pmx-rede {
+				marvell,pins = "mpp15";
+				marvell,function = "gpio";
+			};
+			pmx_m0_reset: pmx-gpio11 {
+				marvell,pins = "mpp47";
+				marvell,function = "gpio";
+			};
+			pmx_m1_reset: pmx-gpio12 {
+				marvell,pins = "mpp38";
+				marvell,function = "gpio";
+			};
+			 pmx_gpio_dir_io_3: pmx-dir-io3 {
+				marvell,pins = "mpp46";
+				marvell,function = "gpio";
+			};
+			pmx_gpio_dir_io_0: pmx-dir-io0 {
+				marvell,pins = "mpp44";
+				marvell,function = "gpio";
+			};
+			pmx_gpio_dir_io_4: pmx-dir-io4 {
+				marvell,pins = "mpp43";
+				marvell,function = "gpio";
+			};
+			pmx_gpio_io_d: pmx-io-d {
+				marvell,pins = "mpp42";
+				marvell,function = "gpio";
+			};
+			pmx_gpio_io_c: pmx-io-c {
+				marvell,pins = "mpp41";
+				marvell,function = "gpio";
+			};
+			pmx_gpio_io_b: pmx-io-b {
+				marvell,pins = "mpp40";
+				marvell,function = "gpio";
+			};
+			pmx_gpio_cpu4: pmx-cpu4 {
+				marvell,pins = "mpp39";
+				marvell,function = "gpio";
+			};
+			
+			pmx_gpio_cpu3: pmx-cpu3 {
+				marvell,pins = "mpp37";
+				marvell,function = "gpio";
+			};
+			pmx_gpio_cpu2: pmx-cpu2 {
+				marvell,pins = "mpp36";
+				marvell,function = "gpio";
+			};
+			pmx_gpio_cpu1: pmx-cpu1 {
+				marvell,pins = "mpp35";
+				marvell,function = "gpio";
+			};
+			pmx_gpio_1: pmx-gpio1 {
+				marvell,pins = "mpp17";
+				marvell,function = "gpio";
+			};
+			pmx_re_de: pmx-re-de {
+				marvell,pins = "mpp15";
+				marvell,function = "gpio";
+			};
+			pmx_swrst: pmx-swrst {
+				marvell,pins = "mpp16";
+				marvell,function = "gpio";
+			};
+			pmx_mpp12: pmx-mpp12 {
+				marvell,pins = "mpp12";
+				marvell,function = "gpio";
+			};
+			pmx_sim_select: pmx-sim-select {
+				marvell,pins = "mpp7";
+				marvell,function = "gpo";
+			};
+			pmx_mii_coll: pmx-mii-coll {
+				marvell,pins = "mpp28";
+				marvell,function = "gpio";
+			};
+			pmx_gpio_phy_int: pmx-phy-int {
+				marvell,pins = "mpp45";
+				marvell,function = "gpio";
+			};
+		};
+		serial@12000 {
+			status = "okay";
+		};
+		serial@12100 {
+			status = "okay";
+		};
+		spi@10600 {
+			status = "disabled";
+		};
+		rtc@10300 {
+			status = "disabled";
+		};
+		wdt@20300 {
+			status = "enabled";
+		};
+	};
+
+	gpio_lv: gpio-lv@0{
+		pinctrl-0 = < &pmx_gpio_io_b &pmx_gpio_io_c &pmx_gpio_io_d 
+						&pmx_gpio_dir_io_0 &pmx_gpio_dir_io_3
+						&pmx_gpio_dir_io_4 >;
+		pinctrl-names = "default";
+		compatible = "gpio-lv";
+		#gpio-cells = <2>;
+		gpio-controller;
+		io1 {
+			input_pin       = <&gpio1 8 0x0>;
+			direction_pin   = <&gpio1 12 0x0>;
+		};
+		io2 {
+			input_pin       = <&gpio1 9 0x0>;
+			direction_pin   = <&gpio1 14 0x0>;
+		};
+		io3 {
+			input_pin       = <&gpio1 10 0x0>;
+			direction_pin   = <&gpio1 11 0x0>;
+		};
+	};
+
+	gpio {
+		compatible = "gpio-export";
+		pinctrl-0 = < &pmx_usb_power &pmx_m0_reset &pmx_m1_reset
+						&pmx_sim_select &pmx_rede &pmx_gpio_cpu3 >;
+		pinctrl-names = "default";
+		USB_POWER {
+			gpios = <&gpio1 16 0>;
+			gpio-export,name  = "USB_POWER";
+			gpio-export,output = <1>;
+		};
+		M0_RESET {
+			gpios = <&gpio1 15 0>;
+			gpio-export,name  = "M0_RESET";
+			gpio-export,output = <0>;
+		};
+		M1_RESET {
+			gpios = <&gpio1 6 0>;
+			gpio-export,name  = "M1_RESET";
+			gpio-export,output = <1>;
+		};
+		SIM_SELECT {
+			gpios = <&gpio0 7 0>;
+			gpio-export,name  = "SIM_SELECT";
+			gpio-export,output = <1>;
+		};
+		RE_DE {
+			gpios = <&gpio0 15 0>;
+			gpio-export,name  = "RE";
+			gpio-export,direction_may_change;
+		};
+
+		IO_1 {
+			gpios = <&gpio_lv 0 0>;
+			gpio-export,name = "IO_1";
+			gpio-export,direction_may_change;
+		};
+		IO_2 {
+			gpios = <&gpio_lv 1 0>;
+			gpio-export,name = "IO_2";
+			gpio-export,direction_may_change;
+		};
+		IO_3 {
+			gpios = <&gpio_lv 2 0>;
+			gpio-export,name = "IO_3";
+			gpio-export,direction_may_change;
+		};
+		RS_232_EN {
+			gpios = <&msp_ex 32 0>;
+			gpio-export,name = "RS_232_EN";
+			gpio-export,output=<0>;
+		};
+		POE_EN {
+			gpios = <&msp_ex 33 0>;
+			gpio-export,name = "POE_EN";
+			gpio-export,output=<1>;
+		};
+		MC{
+			gpios = <&gpio1 5 0>;
+			gpio-export,output=<1>;
+		};
+	};
+
+	gpio-leds {
+	compatible = "gpio-leds";
+	LED100{
+		gpios = <&msp_ex 8 0>;
+		label = "WAN_GREEN";
+	};
+	SIM1{
+		gpios = <&msp_ex 10 0>;
+		label = "SIM1";
+	};
+	SIM2{
+		gpios = <&msp_ex 11 0>;
+		label = "SIM2";
+	};
+	X1{
+		gpios = <&msp_ex 12 0>;
+		label = "LAN_RED";
+	};
+	X11{
+		gpios = <&msp_ex 13 0>;
+		label = "WAN_RED";
+	};
+	X2{
+		gpios = <&msp_ex 14 0>;
+		label = "SLOT1_RED";
+	};
+	X21{
+		gpios = <&msp_ex 15 0>;
+		label = "SLOT1_GREEN";
+	};
+	X3 {
+		gpios = <&msp_ex 16 0>;
+		label = "LINK1_RED";
+	};
+	X31{
+		gpios = <&msp_ex 17 0>;
+		label = "LINK1_GREEN";
+	};
+	CSQ1{
+		gpios = <&msp_ex 18 0>;
+		label = "CSQ1";
+	};
+	CSQ2{
+		gpios = <&msp_ex 19 0>;
+		label = "CSQ2";
+	};
+	CSQ3{
+		gpios = <&msp_ex 20 0>;
+		label = "CSQ3";
+	};
+	CSQ4{
+		gpios = <&msp_ex 21 0>;
+		label = "CSQ4";
+	};
+	LED_3G{
+		gpios = <&msp_ex 22 0>;
+		label = "LINK2_RED";
+	};
+	PPP{
+		gpios = <&msp_ex 23 0>;
+		label = "SLOT2_RED";
+	};
+	LED_3G_1{
+		gpios = <&msp_ex 24 0>;
+		label = "LINK2_GREEN";
+	};
+	PPP_1{
+		gpios = <&msp_ex 25 0>;
+		label = "SLOT2_GREEN";
+	};
+	PWR {
+		gpios = <&msp_ex 26 0>;
+		label = "PWR_GREEN";
+		linux,default-trigger="timer";
+	};
+	PWR_1{
+		gpios = <&msp_ex 27 0>;
+		label = "PWR_RED";
+	};
+	LED_P{
+		gpios = <&msp_ex 28 0>;
+		label = "BTN";
+	};
+};
+
+	switch@0 {
+		compatible = "marvell,88e6172";
+		mii-bus = <&mdio>;
+		cpu-port-0 = <5>;
+		cpu-port-1 = <6>;
+/*		interrupt = <&gpio1 13 0>;*/
+		status="okay";
+	};
+
+	gpio-keys {
+		compatible = "gpio-keys-polled";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		poll-interval = <500>;
+		autorepeat;
+		INTERNET {
+			label = "internet";
+			linux,code = <0xF6>;
+			gpios = <&msp_ex 0 1>;
+		};
+		Reset {
+			label = "reset";
+			linux,code = <0x198>;
+			gpios = <&msp_ex 1 1>;
+		};
+	};
+};
+
+&nand {
+	status = "okay";
+};
+
+&eth0 {
+	status = "okay";
+	ethernet0-port@0 {
+		speed = <1000>;
+		duplex = <1>;
+	};
+};
+
+&mdio {
+	status="okay";
+};
+
+&eth1 {
+	status = "okay";
+	ethernet1-port@0 {
+		speed = <1000>;
+		duplex = <1>;
+	};
+};
+
+&i2c0 {
+	status = "okay";
+
+//	clock-frequency = <50000>;
+
+	rtc@51 {
+		compatible = "nxp,pcf85063";
+		reg = <0x51>;
+	};
+
+	msp_ex: gpio@21 {
+		compatible = "nxp,pca9505";
+		reg = <0x21>;
+		#gpio-cells = <2>;
+		gpio-controller;
+		ngpios = <40>;
+	};
+	maxim5971@20 {
+		pinctrl-0 = < &pmx_gpio_1 >;
+		pinctrl-names = "default";
+		compatible = "maxim,5971b";
+		reg = <0x20>;
+		int = <&gpio0 17 0x0>;
+	};
+};
+
+&sata_phy0{
+	status="disabled";
+};
+
+&sata_phy1{
+	status="disabled";
+};
