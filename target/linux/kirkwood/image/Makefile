@@ -13,6 +13,13 @@ define sanitize_profile_name
 $(shell echo $(PROFILE) | tr '[:upper:]' '[:lower:]')
 endef
 
+KDIR_TMP:=$(KDIR)/tmp
+
+define Image/Prepare/Template
+	$(CC) -E -nostdinc -I$(DTS_DIR) -I$(DTS_DIR)/include -I$(LINUX_DIR)/drivers/of/testcase-data -undef -D__DTS__ -x assembler-with-cpp -o /dev/stdout "../dts/kirkwood-$(1).dts" | \
+	$(LINUX_DIR)/scripts/dtc/dtc -O dtb -i "$(DTS_DIR)" -o "$(DTS_DIR)/kirkwood-$(1).dtb"
+endef
+
 define Image/BuildKernel/Template
 
 	$(CP) $(KDIR)/zImage $(BIN_DIR)/$(IMG_PREFIX)-zImage
@@ -109,6 +116,10 @@ define Image/Build/ubi
  ifneq ($($(PROFILE)_UBI_OPTS),)
 	$(CP) $(KDIR)/root.ubi $(BIN_DIR)/$(IMG_PREFIX)-$(call sanitize_profile_name)-rootfs.ubi
  endif
+endef
+
+define Image/Prepare
+	$(call Image/Prepare/Template/$(PROFILE))
 endef
 
 Image/BuildKernel/Template/Generic=$(call Image/BuildKernel/Template)
