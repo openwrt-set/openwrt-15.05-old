@@ -97,6 +97,7 @@ define Image/Build/squashfs
 		dd if=$(KDIR)/zImage bs=4096k conv=sync; \
 		dd if=$(KDIR)/root.$(1) bs=128k conv=sync; \
 	) > $(BIN_DIR)/$(IMG_PREFIX)-$(call sanitize_profile_name)-$(1).img
+	$(call BuildSysupgrade,$(call sanitize_profile_name),$(1))
 endef
 
 define Image/mkfs/targz
@@ -115,11 +116,17 @@ define Image/Build/ubi
 
  ifneq ($($(PROFILE)_UBI_OPTS),)
 	$(CP) $(KDIR)/root.ubi $(BIN_DIR)/$(IMG_PREFIX)-$(call sanitize_profile_name)-rootfs.ubi
+	$(call BuildSysupgrade,$(call sanitize_profile_name),$(1))
  endif
 endef
 
 define Image/Prepare
 	$(call Image/Prepare/Template/$(PROFILE))
+endef
+
+define BuildSysupgrade
+	$(call Image/Build/SysupgradeNAND,$(1),$(2),$(BIN_DIR)/$(IMG_PREFIX)-$(call sanitize_profile_name)-uImage)
+	$(echo "Sysupgrade called!")
 endef
 
 Image/BuildKernel/Template/Generic=$(call Image/BuildKernel/Template)
@@ -180,6 +187,7 @@ define Image/Build
 	$(if $(Image/Build/$(1)), \
 		$(call Image/Build/$(1),$(1)), \
 		$(CP) $(KDIR)/root.$(1) $(BIN_DIR)/$(IMG_PREFIX)-$(call sanitize_profile_name)-$(1).img \
+		$(call BuildSysupgrade,$(1),$(call sanitize_profile_name)) \
 	)
 endef
 
