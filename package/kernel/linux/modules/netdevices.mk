@@ -843,3 +843,18 @@ define KernelPackage/spi-ks8995/description
 endef
 
 $(eval $(call KernelPackage,spi-ks8995))
+
+define KernelPackage/switch-mv88e61xx
+  SUBMENU:=$(NETWORK_DEVICES_MENU)
+  TITLE:=Marvell 88E6172/6176 switch support
+  DEPENDS:=+kmod-swconfig
+  KCONFIG:=CONFIG_MVSW61XX_PHY
+  FILES:=$(LINUX_DIR)/drivers/net/phy/mvsw61xx.ko
+  AUTOLOAD:=$(call AutoLoad,44,mvsw61xx)
+endef
+
+define KernelPackage/switch-mv88e61xx/description
+ Kernel module for Marvell 88E8172, 88E6176 switches
+endef
+
+$(eval $(call KernelPackage,switch-mv88e61xx))
