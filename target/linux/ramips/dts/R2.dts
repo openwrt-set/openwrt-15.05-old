@@ -1,0 +1,157 @@
+/dts-v1/;
+
+/include/ "rt5350.dtsi"
+
+/ {
+	compatible = "R2", "ralink,rt5350-soc";
+	model = "R2 router board";
+
+	chosen {
+		bootargs = "console=ttyS0,57600";
+	};
+
+	palmbus@10000000 {
+		gpio0: gpio@600 {
+			status = "okay";
+		};
+		gpio1: gpio@660 {
+			status = "okay";
+		};
+		
+		i2c@900 {
+			status = "okay";
+			rtc@51 {
+				compatible = "nxp,pcf85063";
+				reg = <0x51>;
+			};
+		};
+		
+		spi@b00 {
+			status = "okay";
+			m25p80@0 {
+				#address-cells = <1>;
+				#size-cells = <1>;
+				compatible = "w25q128";
+				reg = <0>;
+				linux,modalias = "m25p80", "w25q128";
+				spi-max-frequency = <10000000>;
+				partition@0 {
+					label = "u-boot";
+					reg = <0x0 0x30000>;
+				};
+				partition@30000 {
+					label = "u-boot-env";
+					reg = <0x30000 0x10000>;
+				};
+				factory: partition@40000 {
+					label = "factory";
+					reg = <0x40000 0x10000>;
+				};
+				partition@50000 {
+					label = "kernel";
+					reg = <0x50000 0x100000>;
+				};
+    			partition@150000 {
+					label = "rootfs";
+					reg = <0x150000 0xc00000>;
+				};
+				partition {
+					label = "opt";
+					reg = <0xd50000 0x2b0000>;
+				};
+			};
+		};
+	};
+
+	pinctrl {
+		state_default: pinctrl0 {
+			gpio {
+				ralink,group = "jtag","uartf","spi_cs1";
+				ralink,function = "gpio";
+			};
+		};
+	};
+
+	ethernet@10100000 {
+		status = "okay";
+		mtd-mac-address = <&factory 0x28>;
+	};
+
+	esw@10110000 {
+		status = "okay";
+		ralink,portmap = <0x3f>;
+		ralink,led_polarity = <31>;
+	};
+
+	wmac@10180000 {
+		status = "okay";
+		ralink,mtd-eeprom = <&factory 0>;
+	};
+
+	ehci@101c0000 {
+		status = "okay";
+	};
+
+	ohci@101c1000 {
+		status = "okay";
+	};
+
+	gpio-leds {
+		compatible = "gpio-leds";
+		GSM2G {
+			label = "2G";
+			gpios = <&gpio0 10 0>;
+		};
+		GSM3G {
+			label = "3G";
+			gpios = <&gpio0 8 0>;
+		};
+		CSQ1 {
+			label = "CSQ1";
+			gpios = <&gpio0 14  0>;
+		};
+		CSQ2 {
+			label = "CSQ2";
+			gpios = <&gpio0 13 0>;
+		};
+		CSQ3 {
+			label = "CSQ3";
+			gpios = <&gpio0 9 0>;
+		};
+		power {
+			label = "POWER";
+			gpios = <&gpio0 11 1>;
+			default-state = "on";
+		};
+	};
+	gpio {
+		compatible = "gpio-export";
+		GSM_POWER {
+			gpios = <&gpio0 0 1>;
+			gpio-export,name  = "GSM_POWER";
+			gpio-export,output = <0>;
+		};
+		SIM_SWITCH {
+			gpios = <&gpio0 7 1>;
+			gpio-export,name  = "SIM_SELECT";
+			gpio-export,output = <0>;
+		};
+		
+	};
+	gpio-keys-polled {
+		compatible = "gpio-keys-polled";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		poll-interval = <100>;
+		reset {
+			label = "reset";
+			gpios = <&gpio0 12 1>;
+			linux,code = <0x198>;
+		};
+		wwan {
+			label = "wwan";
+			gpios = <&gpio1 5 1>;
+			linux,code = <0xF6>;
+		};
+	};
+};

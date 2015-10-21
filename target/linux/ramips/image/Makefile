@@ -22,6 +22,8 @@ define Image/Build/Initramfs
 	$(call Image/Build/Profile/$(PROFILE),initramfs)
 endef
 
+KDIR_TMP:=$(KDIR)/tmp
+
 DEVICE_VARS += DTS
 
 loadaddr-y := 0x80000000
@@ -144,6 +146,7 @@ endef
 define MkImageLzmaDtb
 	$(call PatchKernelLzmaDtb,$(1),$(2),$(4))
 	$(call MkImage,lzma,$(KDIR)/vmlinux-$(1)$(4).bin.lzma,$(KDIR)/vmlinux-$(1)$(4).uImage,$(3))
+	$(CP) $(KDIR)/vmlinux-$(1)$(4).uImage $(BIN_DIR)/$(IMG_PREFIX)-$(1)-uImage
 endef
 
 # $(1), Rootfs type, e.g. squashfs
@@ -691,6 +694,30 @@ Image/Build/Profile/X8=$(call BuildFirmware/Poray8M/$(1),$(1),x8,X8)
 
 Image/Build/Profile/XDXRN502J=$(call BuildFirmware/Default4M/$(1),$(1),xdxrn502j,XDXRN502J)
 
+define BuildFirmware/R1/squashfs
+	$(call BuildFirmware/Default8M/$(1),$(1),$(2),$(3))
+	$(call Image/Build/SysupgradeTAR,$(2),$(1),$(KDIR)/vmlinux-$(2).uImage)
+endef
+
+BuildFirmware/R1/initramfs=$(call BuildFirmware/OF/initramfs,$(1),$(2),$(3))
+
+Image/Build/Profile/R1=$(call BuildFirmware/R1/$(1),$(1),irz_ra01,R1)
+
+define BuildFirmware/R2/squashfs
+	$(call BuildFirmware/CustomFlash/$(1),$(1),$(2),$(3), 0xbb0000)
+	$(call Image/Build/SysupgradeTAR,$(2),$(1),$(KDIR)/vmlinux-$(2).uImage)
+endef
+
+BuildFirmware/R2/initramfs=$(call BuildFirmware/OF/initramfs,$(1),$(2),$(3))
+Image/Build/Profile/R2=$(call BuildFirmware/R1/$(1),$(1),irz_ra02,R2)
+
+ifeq ($(SUBTARGET),rt305x)
+define Image/Build/Profile/irz
+	$(call Image/Build/Profile/R1,$(1))
+	$(call Image/Build/Profile/R2,$(1))
+endef
+endif
+
 ifeq ($(SUBTARGET),rt305x)
 define Image/Build/Profile/Default
 	$(call Image/Build/Profile/3G6200N,$(1))
@@ -779,7 +806,8 @@ define Image/Build/Profile/Default
 	$(call Image/Build/Profile/X5,$(1))
 	$(call Image/Build/Profile/X8,$(1))
 	$(call Image/Build/Profile/XDXRN502J,$(1))
-
+	$(call Image/Build/Profile/R1,$(1))
+	$(call Image/Build/Profile/R2,$(1))
 endef
 endif
 

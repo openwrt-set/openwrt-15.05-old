@@ -433,6 +433,12 @@ ramips_board_detect() {
 			name="linkits7688"
 		fi
 		;;
+	*"RA1x router board")
+		name="irz_ra01"
+		;;
+	*"R2 router board")
+		name="irz_ra02"
+		;;
 	*)
 		name="generic"
 		;;

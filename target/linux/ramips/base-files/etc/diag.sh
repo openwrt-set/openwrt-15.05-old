@@ -253,6 +253,12 @@ get_status_led() {
 	zte-q7)
 		status_led="zte:red:status"
 		;;
+	irz_ra01)
+		status_led="POWER"
+		;;
+	irz_ra02)
+		status_led="POWER"
+		;;
 	esac
 }
 
