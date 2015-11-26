@@ -571,3 +571,20 @@ if KERNEL_IP_ADVANCED_ROUTER
 		default n
 endif
 
+#
+# Kernel audit related options
+#
+
+config KERNEL_AUDITSYSCALL
+	bool
+
+config KERNEL_AUDIT
+	bool "Enable audit support"
+	default n
+	select KERNEL_AUDITSYSCALL
+
+if KERNEL_AUDIT
+	config KERNEL_AUDIT_LOGINUID_IMMUTABLE
+		bool "Keep loginuid immutable"
+		default n
+endif
