@@ -544,3 +544,30 @@ config KERNEL_SECCOMP
 		default n
 		help
 		  Build kernel with support for seccomp.
+
+#
+# Kernel advanced routing related options
+#
+
+config KERNEL_IP_ADVANCED_ROUTER
+	bool "Enable advanced router support"
+	default n
+
+if KERNEL_IP_ADVANCED_ROUTER
+	config KERNEL_IP_FIB_TRIE_STATS
+		bool "Keep track of statistics on structure of FIB TRIE table. Useful for testing and measuring TRIE performance."
+		default n
+
+	config KERNEL_IP_MULTIPLE_TABLES
+		bool "Enable policy routing"
+		default n
+
+	config KERNEL_IP_ROUTE_MULTIPATH
+		bool "Enable equal cost multipath"
+		default n
+
+	config KERNEL_IP_ROUTE_VERBOSE
+		bool "Enable verbose route monitoring"
+		default n
+endif
+
