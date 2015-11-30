@@ -319,4 +319,15 @@ user_exists() {
 	grep -qs "^${1}:" ${IPKG_INSTROOT}/etc/passwd
 }
 
+get_var_from_env(){
+	local value
+	if value=$(fw_printenv $1 2>/dev/null); then
+		echo $(echo $value | awk -F= '{print $2}')
+		return 0
+	else
+		logger "get_var_from_env: try to get invalid variable $1"
+		return 1
+	fi
+}
+
 [ -z "$IPKG_INSTROOT" -a -f /lib/config/uci.sh ] && . /lib/config/uci.sh
