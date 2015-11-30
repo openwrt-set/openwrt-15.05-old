@@ -612,6 +612,21 @@ endef
 
 $(eval $(call KernelPackage,rtc-pcf8563))
 
+define KernelPackage/rtc-pcf85063
+  SUBMENU:=$(OTHER_MENU)
+  TITLE:=Philips PCF85063 RTC support
+  DEPENDS:=@RTC_SUPPORT +kmod-i2c-core
+  KCONFIG:=CONFIG_RTC_DRV_PCF85063
+  FILES:=$(LINUX_DIR)/drivers/rtc/rtc-pcf85063.ko
+  AUTOLOAD:=$(call AutoProbe,rtc-pcf85063)
+endef
+
+define KernelPackage/rtc-pcf85063/description
+ Kernel module for Philips PCF85063 RTC chip.
+endef
+
+$(eval $(call KernelPackage,rtc-pcf85063))
+
 
 define KernelPackage/rtc-pcf2123
   SUBMENU:=$(OTHER_MENU)
