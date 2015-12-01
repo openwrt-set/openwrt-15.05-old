@@ -31,25 +31,32 @@ error() {
 }
 
 ask_bool() {
-	local DEFAULT="$1"; shift
-	local def defstr val
-	case "$DEFAULT" in
-		1) def=0; defstr="Y/n";;
-		0) def=1; defstr="y/N";;
-		*) def=;  defstr="y/n";;
-	esac
-	while [ -z "$val" ]; do
-		local VAL
-
-		echo -n "$* ($defstr): "
-		read VAL
-		case "$VAL" in
-			y*|Y*) val=0;;
-			n*|N*) val=1;;
-			*) val="$def";;
+	case $- in
+	*i*)    # interactive shell
+		local DEFAULT="$1"; shift
+		local def defstr val
+		case "$DEFAULT" in
+			1) def=0; defstr="Y/n";;
+			0) def=1; defstr="y/N";;
+			*) def=;  defstr="y/n";;
 		esac
-	done
-	return "$val"
+		while [ -z "$val" ]; do
+			local VAL
+
+			echo -n "$* ($defstr): "
+			read VAL
+			case "$VAL" in
+				y*|Y*) val=0;;
+				n*|N*) val=1;;
+				*) val="$def";;
+			esac
+		done
+		return "$val"
+		;;
+	*)      # non-interactive shell
+		return "1"
+		;;
+	esac
 }
 
 env_init() {
