@@ -87,6 +87,11 @@ env_sync() {
 env_link_config() {
 	rm -f "$BASEDIR/.config"
 	ln -s env/.config "$BASEDIR/.config"
+	if [ -e "${BASEDIR}/env/feeds.conf" ]; then
+		rm -f "$BASEDIR/feeds.conf"
+		ln -s env/feeds.conf "$BASEDIR/feeds.conf"
+	fi
+
 	mkdir -p "$ENVDIR/files"
 	[ -L "$BASEDIR/files" ] || ln -s env/files "$BASEDIR/files"
 }
@@ -136,6 +141,7 @@ env_clear() {
 	env_init
 	[ -L "$BASEDIR/.config" ] && rm -f "$BASEDIR/.config"
 	[ -L "$BASEDIR/files" ] && rm -f "$BASEDIR/files"
+	[ -L "$BASEDIR/feeds.conf" ] && rm -f "$BASEDIR/feeds.conf"
 	[ -f "$ENVDIR/.config" ] || ( cd "$ENVDIR/files" && find | grep -vE '^\.$' > /dev/null )
 	env_sync_data
 	if ask_bool 1 "Do you want to keep your current config and files"; then
