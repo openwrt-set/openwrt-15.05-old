@@ -1,0 +1,21 @@
+--- a/gcc/cp/cfns.h	2015-11-17 12:35:49.404536756 +0300
++++ b/gcc/cp/cfns.h	2015-11-17 12:38:30.594134294 +0300
+@@ -48,17 +48,14 @@
+ along with GCC; see the file COPYING3.  If not see
+ <http://www.gnu.org/licenses/>.  */
+ #ifdef __GNUC__
+-__inline
+ #endif
+ static unsigned int hash (const char *, unsigned int);
+ #ifdef __GNUC__
+-__inline
+ #endif
+ const char * libc_name_p (const char *, unsigned int);
+ /* maximum key range = 391, duplicates = 0 */
+ 
+ #ifdef __GNUC__
+-__inline
+ #else
+ #ifdef __cplusplus
+ inline
+
