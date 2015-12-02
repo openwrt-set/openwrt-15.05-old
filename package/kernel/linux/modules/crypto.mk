@@ -285,7 +285,7 @@ $(eval $(call KernelPackage,crypto-arc4))
 
 define KernelPackage/crypto-authenc
   TITLE:=Combined mode wrapper for IPsec
-  DEPENDS:=+kmod-crypto-manager
+  DEPENDS:=+kmod-crypto-manager +kmod-crypto-aead
   KCONFIG:=CONFIG_CRYPTO_AUTHENC
   FILES:=$(LINUX_DIR)/crypto/authenc.ko
   AUTOLOAD:=$(call AutoLoad,09,authenc)
