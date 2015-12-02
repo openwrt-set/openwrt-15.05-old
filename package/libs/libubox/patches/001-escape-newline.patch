@@ -1,0 +1,40 @@
+commit ccdee22420a5be5699d8a4e0662e60995e5b9d36
+Author: Ilya Kuzmich <ilya.kuzmich@gmail.com>
+Date:   Mon Jul 7 20:39:32 2014 +0400
+
+    build only jshn, jshn escapes \n
+
+
+diff --git a/jshn.c b/jshn.c
+index f71e6e6..282b06b 100644
+--- a/jshn.c
++++ b/jshn.c
+@@ -64,21 +64,13 @@ static int add_json_array(struct array_list *a)
+ 
+ static void add_json_string(const char *str)
+ {
+-	char *ptr = (char *) str;
+-	int len;
+-	char *c;
+-
+-	while ((c = strchr(ptr, '\'')) != NULL) {
+-		len = c - ptr;
+-		if (len > 0)
+-			fwrite(ptr, len, 1, stdout);
+-		ptr = c + 1;
+-		c = "'\\''";
+-		fwrite(c, strlen(c), 1, stdout);
+-	}
+-	len = strlen(ptr);
+-	if (len > 0)
+-		fwrite(ptr, len, 1, stdout);
++    for (;*str;str++) {
++        switch (*str) {
++            case '\'': fputs("'\\''", stdout); break;
++            case '\n': fputs("\\n", stdout); break;
++            default: putc(*str, stdout);
++        }
++    }
+ }
+ 
+ static void write_key_string(const char *key)
