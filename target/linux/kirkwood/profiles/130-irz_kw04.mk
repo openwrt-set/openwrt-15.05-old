@@ -7,17 +7,17 @@
 
 define Profile/IRZ_KW04
   NAME:=iRZ kw04 router board
-  PACKAGES:= \
+  DEFAULT_PACKAGES:= \
 	kmod-usb2 kmod-usb-storage uboot-envtools \
 	kmod-input-evdev kmod-input-gpio-keys kmod-input-gpio-keys-polled \
 	kmod-gpio-button-hotplug kmod-input-polldev \
 	kmod-fs-msdos kmod-fs-vfat kmod-scsi-core \
-	kmod-switch-mv88e6172 kmod-gpio-pca953x \
+	kmod-switch-mv88e61xx kmod-gpio-pca953x \
 	kmod-rtc-pcf85063 kmod-thermal kmod-thermal-kirkwood \
 	kmod-wdt-orion kmod-usb-serial-option kmod-usb-serial-pl2303 \
 	kmod-usb-serial-pl2303 kmod-usb-serial-pl2303 \
 	kmod-usb-serial-qualcomm kmod-usb-serial-sierrawireless \
-	kmod-usb-storage kmod-usb-serial
+	kmod-usb-storage kmod-usb-serial kmod-maxim59xx
 endef
 
 define Profile/IRZ_KW04/Description
