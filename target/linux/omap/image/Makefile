@@ -10,6 +10,11 @@ include $(INCLUDE_DIR)/image.mk
 UBIFS_OPTS = -F -m 2048 -e 124KiB -c 4096 -U
 UBI_OPTS = -m 2048 -p 128KiB -s 512 -O 2048
 
+define Image/Prepare/Template
+	$(CC) -E -nostdinc -I$(DTS_DIR) -I$(DTS_DIR)/include -I$(LINUX_DIR)/drivers/of/testcase-data -undef -D__DTS__ -x assembler-with-cpp -o /dev/stdout "../dts/$(1).dts" | \
+	$(LINUX_DIR)/scripts/dtc/dtc -O dtb -i "$(DTS_DIR)" -o "$(DTS_DIR)/$(1).dtb"
+endef
+
 define Image/BuildKernel
 	$(CP) $(KDIR)/zImage $(BIN_DIR)/$(IMG_PREFIX)-zImage
  ifneq ($(CONFIG_TARGET_ROOTFS_INITRAMFS),)
@@ -30,6 +35,10 @@ define Image/BuildKernel
 	-$(CP) $(DTS_DIR)/am335x*.dtb $(BIN_DIR)/dtbs/
 	-$(CP) $(DTS_DIR)/omap3*.dtb $(BIN_DIR)/dtbs/
 	-$(CP) $(DTS_DIR)/omap4*.dtb $(BIN_DIR)/dtbs/
+endef
+
+define Image/Prepare
+       $(call Image/Prepare/Template/$(PROFILE))
 endef
 
 define Image/Build
