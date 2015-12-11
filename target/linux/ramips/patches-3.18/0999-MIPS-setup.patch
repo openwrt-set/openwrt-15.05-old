@@ -1,0 +1,15 @@
+--- a/arch/mips/ralink/of.c	2014-03-24 08:42:03.000000000 +0400
++++ b/arch/mips/ralink/of.c	2014-04-25 12:49:07.027679879 +0400
+@@ -90,8 +90,10 @@
+ 	__dt_setup_arch(&__image_dtb);
+ 
+ 	of_scan_flat_dt(early_init_dt_find_chosen, NULL);
+-	if (chosen_dtb)
+-		strlcpy(arcs_cmdline, boot_command_line, COMMAND_LINE_SIZE);
++	if (chosen_dtb) {
++		strlcat(arcs_cmdline, " ", COMMAND_LINE_SIZE);
++		strlcat(arcs_cmdline, boot_command_line, COMMAND_LINE_SIZE);
++	}
+ 
+ 	of_scan_flat_dt(early_init_dt_find_memory, NULL);
+ 	if (memory_dtb)
