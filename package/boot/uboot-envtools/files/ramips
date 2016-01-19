@@ -16,7 +16,8 @@ board=$(ramips_board_name)
 case "$board" in
 all0239-3g | \
 all0256n | \
-all5002)
+all5002 |\
+irz_ra02)
 	ubootenv_add_uci_config "/dev/mtd1" "0x0" "0x10000" "0x10000"
 	;;
 
@@ -24,7 +25,8 @@ linkits7688 | \
 linkits7688d | \
 wsr-600 | \
 wsr-1166 | \
-br6425)
+br6425 |\
+irz_ra01)
 	ubootenv_add_uci_config "/dev/mtd1" "0x0" "0x1000" "0x10000"
 	;;
 esac
