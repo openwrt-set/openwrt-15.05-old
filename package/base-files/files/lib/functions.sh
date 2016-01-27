@@ -323,9 +323,10 @@ user_exists() {
 }
 
 get_var_from_env(){
+	logger "get_var_from_env: obsolete function use ubootenv_get_var from /lib/uboot-envtools.sh"
 	local value
-	if value=$(fw_printenv $1 2>/dev/null); then
-		echo $(echo $value | awk -F= '{print $2}')
+	if value=$(fw_printenv -n $1 2>/dev/null); then
+		echo $value
 		return 0
 	else
 		logger "get_var_from_env: try to get invalid variable $1"

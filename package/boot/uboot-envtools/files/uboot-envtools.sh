@@ -34,3 +34,13 @@ ubootenv_add_app_config() {
 	echo "$dev $offset $envsize $secsize $numsec" >>/etc/fw_env.config
 }
 
+ubootenv_get_var(){
+	local value
+	if value=$(fw_printenv -n $1 2>/dev/null); then
+		echo $value
+		return 0
+	else
+		logger "get_var_from_env: try to get invalid variable $1"
+		return 1
+	fi
+}
