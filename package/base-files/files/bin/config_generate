@@ -124,32 +124,16 @@ generate_network() {
 				set network.${1}6.proto='dhcpv6'
 			EOF
 		;;
-		mobile)
-				local devnum service auto metric
-				json_select network
-					json_select "$1"
-						json_get_vars devnum service auto metric
-					json_select ..
-				json_select ..
-				uci -q batch <<-EOF
-					set network.$1.device_number='$devnum'
-					set network.$1.apn=''
-					set network.$1.service='$service'
-					set network.$1.proto='3g'
-					set network.$1.pincode=''
-					set network.$1.username=''
-					set network.$1.password=''
-					set network.$1.auto='$auto'
-					set network.$1.defaultroute='1'
-					set network.$1.metric='$metric'
-					set network.$1.enable='1'
-					set network.$1.peerdns='1'
-					set network.$1.ipv6='0'
-					set network.$1.mode='auto'
-					set network.$1.auth='any'
-					set network.$1.allow_roaming='0'
-					set network.$1.device=''
-				EOF
+		wifiwan)
+			uci -q batch <<-EOF
+				set network.$1='none'
+				set network.$1.ifname='$ifname'
+				set network.$1.proto='none'
+				set network.$1.auto='0'
+				set network.$1.peerdns='1'
+				set network.$1.metric='106'
+				set network.$1.defaultroute='1'
+			EOF
 		;;
 	esac
 }
