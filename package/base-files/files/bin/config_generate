@@ -189,6 +189,7 @@ generate_switch_vlans_ports() {
 		json_select "$role"
 			json_get_vars ports
 			json_get_var role_name role
+			json_get_var cpuport cpuport
 		json_select ..
 		local external_net=0
 		if [ "$role_name" = "wan" ]; then
@@ -200,6 +201,7 @@ generate_switch_vlans_ports() {
 			set network.@switch_vlan[-1].vlan='$role'
 			set network.@switch_vlan[-1].ports='$ports'
 			set network.@switch_vlan[-1].external_net='$external_net'
+			set network.@switch_vlan[-1].cpu_port='$cpuport'
 		EOF
 	done
 

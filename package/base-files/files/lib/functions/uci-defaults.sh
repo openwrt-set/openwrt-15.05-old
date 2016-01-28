@@ -154,7 +154,7 @@ _ucidef_finish_switch_roles() {
 						json_get_vars num device need_tag
 					json_select ..
 				json_select ..
-
+				local nnum="$num"
 				if [ $n_vlan -gt $n_cpu -o ${need_tag:-0} -eq 1 ]; then
 					num="${num}t"
 					device="${device}.${index}"
@@ -165,6 +165,7 @@ _ucidef_finish_switch_roles() {
 						json_get_vars role ports
 						json_add_string ports "$ports $num"
 						json_add_string device "$device"
+						json_add_string cpuport "$nnum"
 					json_select ..
 				json_select ..
 			json_select ..
