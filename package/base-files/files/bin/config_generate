@@ -138,6 +138,42 @@ generate_network() {
 	esac
 }
 
+generate_mobile() {
+	local ifname devnum service auto metric type
+
+	json_select mobile
+		json_select "$1"
+			json_get_vars ifname devnum service auto metric
+		json_select ..
+	json_select ..
+
+	[ -n "$ifname" ] || return
+	
+	uci -q batch <<-EOF
+		delete network.$1
+		set network.$1='interface'
+		set network.$1.ifname='$ifname'
+		set network.$1.proto='3g'
+		set network.$1.device_number='$devnum'
+		set network.$1.apn=''
+		set network.$1.service='$service'
+		set network.$1.pincode=''
+		set network.$1.username=''
+		set network.$1.password=''
+		set network.$1.auto='$auto'
+		set network.$1.defaultroute='1'
+		set network.$1.metric='$metric'
+		set network.$1.enable='1'
+		set network.$1.peerdns='1'
+		set network.$1.ipv6='0'
+		set network.$1.mode='auto'
+		set network.$1.auth='any'
+		set network.$1.allow_roaming='0'
+		set network.$1.device=''
+	EOF
+
+}
+
 generate_switch_vlans_ports() {
 	local switch="$1"
 	local port ports role roles num attr val
@@ -353,6 +389,9 @@ generate_static_network
 
 json_get_keys keys network
 for key in $keys; do generate_network $key; done
+
+json_get_keys keys mobile
+for key in $keys; do generate_mobile $key; done
 
 json_get_keys keys switch
 for key in $keys; do generate_switch $key; done
