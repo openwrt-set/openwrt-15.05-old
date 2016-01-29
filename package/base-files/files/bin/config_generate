@@ -103,10 +103,10 @@ generate_network() {
 			uci -q batch <<-EOF
 				set network.$1.proto='dhcp'
 				delete network.${1}6
-				set network.${1}6='interface'
-				set network.${1}6.ifname='$ifname'
-				set network.${1}6.proto='dhcpv6'
 			EOF
+				# set network.${1}6='interface'
+				# set network.${1}6.ifname='$ifname'
+				# set network.${1}6.proto='dhcpv6'
 		;;
 
 		pppoe)
@@ -119,22 +119,22 @@ generate_network() {
 				set network.$1.password='password'
 				set network.$1.ipv6='auto'
 				delete network.${1}6
-				set network.${1}6='interface'
-				set network.${1}6.ifname='$ifname'
-				set network.${1}6.proto='dhcpv6'
 			EOF
+				# set network.${1}6='interface'
+				# set network.${1}6.ifname='$ifname'
+				# set network.${1}6.proto='dhcpv6'
 		;;
-		wifiwan)
-			uci -q batch <<-EOF
-				set network.$1='none'
-				set network.$1.ifname='$ifname'
-				set network.$1.proto='none'
-				set network.$1.auto='0'
-				set network.$1.peerdns='1'
-				set network.$1.metric='106'
-				set network.$1.defaultroute='1'
-			EOF
-		;;
+		# wifiwan)
+		# 	uci -q batch <<-EOF
+		# 		set network.$1='none'
+		# 		set network.$1.ifname='$ifname'
+		# 		set network.$1.proto='none'
+		# 		set network.$1.auto='0'
+		# 		set network.$1.peerdns='1'
+		# 		set network.$1.metric='106'
+		# 		set network.$1.defaultroute='1'
+		# 	EOF
+		# ;;
 	esac
 }
 
@@ -202,6 +202,7 @@ generate_switch_vlans_ports() {
 			set network.@switch_vlan[-1].ports='$ports'
 			set network.@switch_vlan[-1].external_net='$external_net'
 			set network.@switch_vlan[-1].cpu_port='$cpuport'
+			set network.@switch_vlan[-1]='vlan_$role'
 		EOF
 	done
 
