@@ -202,7 +202,7 @@ generate_switch_vlans_ports() {
 			set network.@switch_vlan[-1].ports='$ports'
 			set network.@switch_vlan[-1].external_net='$external_net'
 			set network.@switch_vlan[-1].cpu_port='$cpuport'
-			set network.@switch_vlan[-1]='vlan_$role'
+			rename network.@switch_vlan[-1]='vlan_$role'
 		EOF
 	done
 
