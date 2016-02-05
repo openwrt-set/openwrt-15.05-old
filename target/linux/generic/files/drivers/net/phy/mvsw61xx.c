@@ -250,6 +250,50 @@ mvsw61xx_get_port_link(struct switch_dev *dev, int port,
 	return 0;
 }
 
+static int
+mvsw61xx_set_port_link(struct switch_dev *dev, int port,
+		struct switch_port_link *link)
+{
+	u16 reg,ctl,status, state;
+	reg = sr16(dev, MV_PORTREG(PHYCTL, port));
+	reg &= (0xc000); // clear all except rgmii timings
+	if(link->aneg) {
+		reg |= MV_PORT_STATUS_SPEED_AUTO;	// disable speed force
+		reg &= ~(1 << 2);					// disable duplex force
+		reg &= ~(1 << 4);					// disable link force
+		reg &= ~(1 << 6);					// disable flow control force
+	} else {
+		if (link->duplex) {
+			reg |= (1 << 3);
+		} else {
+			reg &= ~(1 << 3);
+		}
+		reg |= (1 << 2);					// force duplex
+		switch(link->speed) {
+			case SWITCH_PORT_SPEED_10:		// left as 0b00
+				break;
+			case SWITCH_PORT_SPEED_100:
+				reg |= 0x1;
+				break;
+			case SWITCH_PORT_SPEED_1000:
+				reg |= 0x2;
+				break;
+			default:
+				return -ENOTSUPP;
+				break;
+		}
+	}
+	status = sr16(dev, MV_PORTREG(CONTROL, port));
+	state = status & 0x3;
+	status &= ~(0x3);
+	sw16(dev, MV_PORTREG(CONTROL, port), status);	// disable port
+	sw16(dev, MV_PORTREG(PHYCTL, port), reg);		// set port link
+	status |= state;
+	sw16(dev, MV_PORTREG(CONTROL, port), status);	// enable port
+
+	return 0;
+}
+
 static int mvsw61xx_get_vlan_ports(struct switch_dev *dev,
 		struct switch_val *val)
 {
@@ -700,6 +744,7 @@ static const struct switch_dev_ops mvsw61xx_ops = {
 		.n_attr = ARRAY_SIZE(mvsw61xx_port),
 	},
 	.get_port_link = mvsw61xx_get_port_link,
+	.set_port_link = mvsw61xx_set_port_link,
 	.get_port_pvid = mvsw61xx_get_port_pvid,
 	.set_port_pvid = mvsw61xx_set_port_pvid,
 	.get_vlan_ports = mvsw61xx_get_vlan_ports,
