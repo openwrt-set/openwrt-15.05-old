@@ -953,6 +953,46 @@ static int esw_get_port_link(struct switch_dev *dev,
 	return 0;
 }
 
+static int esw_set_port_link(struct switch_dev *dev,
+			 int port,
+			 struct switch_port_link *link)
+{
+	struct rt305x_esw *esw = container_of(dev, struct rt305x_esw, swdev);
+	u32 fpa;
+
+	if (port < 0 || port >= RT305X_ESW_NUM_PORTS)
+		return -EINVAL;
+
+	fpa = esw_r32(esw, RT305X_ESW_REG_FPA);
+
+	if(link->aneg) {
+		fpa &= ~((1 << port) << 27); // clear force port settings flag
+	} else {
+		if (link->duplex) {
+			fpa |= ((1 << port) << 8);
+		} else {
+			fpa &= ~((1 << port) << 8);
+		}
+		switch(link->speed) {
+			case SWITCH_PORT_SPEED_10:
+				fpa &= ~((1 << port));
+				break;
+			case SWITCH_PORT_SPEED_100:
+				fpa |= ((1 << port));
+				break;
+			default:
+				return -ENOTSUPP;
+				break;
+		}
+		fpa |= ((1 << port) << 22);
+		fpa |= ((1 << port) << 27); // set force port settings flag
+	}
+
+	esw_w32(esw, fpa, RT305X_ESW_REG_FPA);
+
+	return 0;
+}
+
 static int esw_get_port_bool(struct switch_dev *dev,
 			 const struct switch_attr *attr,
 			 struct switch_val *val)
@@ -1353,6 +1393,7 @@ static const struct switch_dev_ops esw_ops = {
 	.get_port_pvid = esw_get_port_pvid,
 	.set_port_pvid = esw_set_port_pvid,
 	.get_port_link = esw_get_port_link,
+	.set_port_link = esw_set_port_link,
 	.apply_config = esw_apply_config,
 	.reset_switch = esw_reset_switch,
 };
