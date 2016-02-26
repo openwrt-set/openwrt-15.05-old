@@ -128,7 +128,8 @@ platform_check_image() {
 	y1s |\
 	zbt-wa05 |\
 	zbt-wg2626 |\
-	zte-q7)
+	zte-q7 |\
+	irz_ra02)
 		[ "$magic" != "27051956" ] && {
 			echo "Invalid image type."
 			return 1
@@ -173,8 +174,7 @@ platform_check_image() {
 		}
 		return 0
 		;;
-	irz_ra01 |\
-	irz_ra02)
+	irz_ra01)
 		local control_length=`(tar xf $1 sysupgrade-$board/CONTROL -O | wc -c) 2> /dev/null`
 		local rootfs_magic=`(tar xf $1 sysupgrade-$board/rootfs -O | dd bs=4 count=1 | hexdump -v -n 4 -e '1/1 "%02x"') 2> /dev/null`
 
@@ -216,10 +216,9 @@ platform_do_upgrade() {
 	local board=$(ramips_board_name)
 
 	case "$board" in
-	irz_ra01|irz_ra02)
+	irz_ra01)
 		do_r1_upgrade "$ARGV"
 		;;
-
 	*)
 		default_do_upgrade "$ARGV"
 		;;
