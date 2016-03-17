@@ -24,6 +24,7 @@
 #define MV_SWITCHREGS			(MV_BASE + 0xb)
 
 #define MV_VLANS			64
+#define MV_MAX_VLAN			4096
 
 enum {
 	MV_PORT_STATUS			= 0x00,
@@ -235,6 +236,7 @@ struct mvsw61xx_state {
 	struct mii_bus *bus;
 	int base_addr;
 	u16 model;
+	u16 last_vlan;
 
 	bool registered;
 	bool is_indirect;
