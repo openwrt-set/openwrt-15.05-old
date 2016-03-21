@@ -152,7 +152,7 @@ static struct vlan_state* mvsw61xx_get_vlan_by_vid(struct switch_dev *dev, u16 v
 	struct mvsw61xx_state *state = get_state(dev);
 	struct vlan_state* result = NULL;
 
-	for( i=0; i < state->last_vlan; i++ ) {
+	for( i=1; i < state->last_vlan; i++ ) {
 		if( state->vlans[i].vid == vid ){
 			result = &state->vlans[i];
 			break;
@@ -351,7 +351,6 @@ static int mvsw61xx_set_vlan_ports(struct switch_dev *dev,
 	struct mvsw61xx_state *state = get_state(dev);
 	int i, mode, pno, vno;
 	struct vlan_state* v;
-
 	vno = val->port_vlan;
 
 	if (vno <= 0 || vno >= MV_MAX_VLAN)
@@ -473,7 +472,6 @@ static int mvsw61xx_set_vid(struct switch_dev *dev,
 	struct mvsw61xx_state *state = get_state(dev);
 	int vno = val->port_vlan;
 	struct vlan_state* v;
-
 	if (vno <= 0 || vno >= MV_MAX_VLAN)
 		return -EINVAL;
 
@@ -519,7 +517,9 @@ static int mvsw61xx_vtu_program(struct switch_dev *dev)
 			MV_VTUOP_INPROGRESS | MV_VTUOP_PURGE);
 
 	/* Write VLAN table */
-	for (i = 0; i < state->last_vlan; i++) {
+	pr_info("apply vlan settings. last_vlan: %d\n", state->last_vlan);
+	for (i = 1; i < state->last_vlan; i++) {
+		pr_info("apply vlan %d vid: %d port_sstate: 0x%X port_mode: 0x%X\n", i, state->vlans[i].vid, state->vlans[i].port_sstate, state->vlans[i].port_mode );
 		if (state->vlans[i].mask == 0 ||
 				state->vlans[i].vid == 0 ||
 				state->vlans[i].port_based == true)
@@ -633,7 +633,7 @@ static int mvsw61xx_update_state(struct switch_dev *dev)
 		state->ports[i].qmode = MV_8021Q_MODE_DISABLE;
 	}
 
-	for (i = 0; i < state->last_vlan; i++)
+	for (i = 1; i < state->last_vlan; i++)
 		mvsw61xx_vlan_port_config(dev, i);
 
 	for (i = 0; i < dev->ports; i++) {
@@ -711,7 +711,7 @@ static int mvsw61xx_reset(struct switch_dev *dev)
 		state->vlans[i].port_mode = 0;
 		state->vlans[i].port_sstate = 0;
 	}
-	state->last_vlan = 0;
+	state->last_vlan = 1;
 	state->vlan_enabled = 0;
 
 	mvsw61xx_update_state(dev);
@@ -901,7 +901,7 @@ static int mvsw61xx_probe(struct platform_device *pdev)
 	state->dev.name = model_str;
 	state->dev.ops = &mvsw61xx_ops;
 	state->dev.alias = dev_name(&pdev->dev);
-	state->last_vlan = 0;
+	state->last_vlan = 1;
 
 	err = register_switch(&state->dev, NULL);
 	if (err < 0)
