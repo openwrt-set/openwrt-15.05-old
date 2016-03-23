@@ -60,7 +60,7 @@ generate_network() {
 
 	json_select network
 		json_select "$1"
-			json_get_vars ifname macaddr protocol
+			json_get_vars ifname macaddr protocol metric defaultroute peerdns auto
 		json_select ..
 	json_select ..
 
@@ -78,6 +78,10 @@ generate_network() {
 		set network.$1.ifname='$ifname'
 		set network.$1.proto='none'
 		set network.$1.macaddr='$macaddr'
+		set network.$1.metric='$metric'
+		set network.$1.defaultroute='$defaultroute'
+		set network.$1.peerdns='$peerdns'
+		set network.$1.auto='$auto'
 	EOF
 
 	case "$protocol" in
