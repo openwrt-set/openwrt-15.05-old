@@ -93,7 +93,6 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
 +	return platform_driver_register(&gpio_export_driver);
 +}
 +device_initcall(of_gpio_export_init);
-
 --- a/include/asm-generic/gpio.h
 +++ b/include/asm-generic/gpio.h
 @@ -123,6 +123,12 @@ static inline int gpio_export(unsigned g

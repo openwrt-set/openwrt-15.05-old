@@ -4,11 +4,9 @@ Date:   Tue Mar 3 16:51:47 2015 +0300
 
     usb: option: interpret error -71 as debug, not an error
 
-diff --git a/drivers/usb/serial/option.c b/drivers/usb/serial/option.c
-index 80bf790..a686a4c8 100644
 --- a/drivers/usb/serial/option.c
 +++ b/drivers/usb/serial/option.c
-@@ -1961,7 +1961,7 @@ static void option_instat_callback(struct urb *urb)
+@@ -2028,7 +2028,7 @@ static void option_instat_callback(struc
  			dev_dbg(dev, "%s: type %x req %x\n", __func__,
  				req_pkt->bRequestType, req_pkt->bRequest);
  		}

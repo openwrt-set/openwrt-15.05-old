@@ -1,6 +1,6 @@
---- a/drivers/usb/serial/option.c	2014-11-13 16:49:26.110000082 +0300
-+++ b/drivers/usb/serial/option.c	2014-11-13 16:52:14.979807537 +0300
-@@ -355,6 +355,9 @@
+--- a/drivers/usb/serial/option.c
++++ b/drivers/usb/serial/option.c
+@@ -371,6 +371,9 @@ static void option_instat_callback(struc
  /* SpeedUp SU9800 usb 3g modem */
  #define SPEEDUP_PRODUCT_SU9800			0x9800
  
@@ -9,12 +9,12 @@
 +
  /* Haier products */
  #define HAIER_VENDOR_ID				0x201e
- #define HAIER_PRODUCT_CE100			0x2009
-@@ -1588,6 +1591,7 @@
+ #define HAIER_PRODUCT_CE81B			0x10f8
+@@ -1693,6 +1696,7 @@ static const struct usb_device_id option
    	},
  	{ USB_DEVICE_INTERFACE_CLASS(LONGCHEER_VENDOR_ID, SPEEDUP_PRODUCT_SU9800, 0xff) },
  	{ USB_DEVICE(LONGCHEER_VENDOR_ID, ZOOM_PRODUCT_4597) },
 +	{ USB_DEVICE(LONGCHEER_VENDOR_ID, LONGUNG_8301) },
  	{ USB_DEVICE(LONGCHEER_VENDOR_ID, IBALL_3_5G_CONNECT) },
  	{ USB_DEVICE(HAIER_VENDOR_ID, HAIER_PRODUCT_CE100) },
- 	/* Pirelli  */
+ 	{ USB_DEVICE_AND_INTERFACE_INFO(HAIER_VENDOR_ID, HAIER_PRODUCT_CE81B, 0xff, 0xff, 0xff) },

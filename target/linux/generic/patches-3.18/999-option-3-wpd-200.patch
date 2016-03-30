@@ -4,11 +4,9 @@ Date:   Tue Mar 3 16:49:47 2015 +0300
 
     usb: option: add WeTelecom WPD-200 module
 
-diff --git a/drivers/usb/serial/option.c b/drivers/usb/serial/option.c
-index 3d9ec15..80bf790 100644
 --- a/drivers/usb/serial/option.c
 +++ b/drivers/usb/serial/option.c
-@@ -104,6 +104,7 @@ static void option_instat_callback(struct urb *urb);
+@@ -104,6 +104,7 @@ static void option_instat_callback(struc
  /* WeTelecom PRODUCTS */
  #define WETELECOM_VENDOR_ID			0x22DE
  #define WETELECOM_WPD_600			0x9070
@@ -16,7 +14,7 @@ index 3d9ec15..80bf790 100644
  
  /*
   * NOVATEL WIRELESS PRODUCTS
-@@ -1766,6 +1767,7 @@ static const struct usb_device_id option_ids[] = {
+@@ -1843,6 +1844,7 @@ static const struct usb_device_id option
  	{ USB_DEVICE(INOVIA_VENDOR_ID, INOVIA_SEW858) },
  	{ USB_DEVICE(VIATELECOM_VENDOR_ID, VIATELECOM_PRODUCT_CDS7) },
  	{ USB_DEVICE(WETELECOM_VENDOR_ID, WETELECOM_WPD_600) },

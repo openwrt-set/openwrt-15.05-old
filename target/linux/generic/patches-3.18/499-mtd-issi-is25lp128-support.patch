@@ -1,6 +1,6 @@
---- a/drivers/mtd/spi-nor/spi-nor.c	2016-02-03 14:54:13.000000000 +0300
-+++ b/drivers/mtd/spi-nor/spi-nor.c	2016-02-08 13:56:31.872463838 +0300
-@@ -518,6 +518,7 @@
+--- a/drivers/mtd/spi-nor/spi-nor.c
++++ b/drivers/mtd/spi-nor/spi-nor.c
+@@ -518,6 +518,7 @@ static const struct spi_device_id spi_no
  
  	/* ISSI */
  	{ "is25cd512", INFO(0x7f9d20, 0, 32 * 1024,   2, SECT_4K) },
