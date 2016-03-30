@@ -309,7 +309,7 @@
 		status="okay";
 	};
 
-	gpio-keys {
+	gpio-keys-polled {
 		compatible = "gpio-keys-polled";
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -385,3 +385,4 @@
 &sata_phy1{
 	status="disabled";
 };
+
