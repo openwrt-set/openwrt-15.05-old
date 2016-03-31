@@ -53,7 +53,7 @@ run_ramfs() { # <command> [...]
 		/bin/dd /bin/vi /bin/ls /bin/cat /usr/bin/awk /usr/bin/hexdump	\
 		/bin/sleep /bin/zcat /usr/bin/bzcat /usr/bin/printf /usr/bin/wc \
 		/bin/cut /usr/bin/printf /bin/sync /bin/mkdir /bin/rmdir	\
-		/bin/rm /usr/bin/basename /bin/kill /bin/chmod
+		/bin/rm /usr/bin/basename /bin/kill /bin/chmod /usr/bin/tftp
 
 	install_bin /sbin/mtd
 	install_bin /sbin/mount_root
@@ -67,6 +67,7 @@ run_ramfs() { # <command> [...]
 	install_bin /usr/sbin/ubirsvol
 	install_bin /usr/sbin/ubirmvol
 	install_bin /usr/sbin/ubimkvol
+	install_bin /usr/sbin/telnetd
 	for file in $RAMFS_COPY_BIN; do
 		install_bin ${file//:/ }
 	done

@@ -191,6 +191,19 @@ for check in $sysupgrade_image_check; do
 	}
 done
 
+preupgrade () {
+	mkdir /tmp/preupgrade
+	tar -xf /tmp/sysupgrade -C /tmp/preupgrade
+	if [ -d /tmp/preupgrade/sysupgrade-*/preupgrade.d ]; then
+		f=`find /tmp/preupgrade/sysupgrade-*/preupgrade.d/*`
+		for i in $f
+		do
+			$i
+		done
+	fi
+	rm -R /tmp/preupgrade
+}
+
 if [ -n "$CONF_IMAGE" ]; then
 	case "$(get_magic_word $CONF_IMAGE cat)" in
 		# .gz files
@@ -203,6 +216,7 @@ if [ -n "$CONF_IMAGE" ]; then
 	get_image "$CONF_IMAGE" "cat" > "$CONF_TAR"
 	export SAVE_CONFIG=1
 elif ask_bool $SAVE_CONFIG "Keep config files over reflash"; then
+	[ $TEST -eq 1 ] || preupgrade
 	[ $TEST -eq 1 ] || do_save_conffiles
 	export SAVE_CONFIG=1
 else

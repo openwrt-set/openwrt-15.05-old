@@ -237,14 +237,26 @@ nand_upgrade_ubifs() {
 	nand_do_upgrade_success
 }
 
+nand_critical_error() {
+	f=`ls /sys/class/leds/`
+	for i in $f
+	do
+		echo timer >/sys/class/leds/$i/trigger
+	done
+	/usr/sbin/telnetd -F -l /bin/ash
+}
+
 nand_upgrade_tar() {
 	local tar_file="$1"
 	local board_name="$(cat /tmp/sysinfo/board_name)"
 	local kernel_mtd="$(find_mtd_index $CI_KERNPART)"
+	
+	local kernel_sum=`(tar xf $tar_file sysupgrade-$board_name/kernel -O | md5sum) 2> /dev/null`
+	local rootfs_sum=`(tar xf $tar_file sysupgrade-$board_name/root -O | md5sum) 2> /dev/null`
 
 	local kernel_length=`(tar xf $tar_file sysupgrade-$board_name/kernel -O | wc -c) 2> /dev/null`
 	local rootfs_length=`(tar xf $tar_file sysupgrade-$board_name/root -O | wc -c) 2> /dev/null`
-
+	
 	local rootfs_type="$(identify_tar "$tar_file" sysupgrade-$board_name/root)"
 
 	local has_kernel=1
@@ -258,17 +270,48 @@ nand_upgrade_tar() {
 	nand_upgrade_prepare_ubi "$rootfs_length" "$rootfs_type" "$has_kernel" "$has_env"
 
 	local ubidev="$( nand_find_ubi "$CI_UBIPART" )"
-	[ "$has_kernel" = "1" ] && {
-		local kern_ubivol="$(nand_find_volume $ubidev kernel)"
-	 	tar xf $tar_file sysupgrade-$board_name/kernel -O | \
-			ubiupdatevol /dev/$kern_ubivol -s $kernel_length -
+
+
+	local index=0
+	while [ $index -lt 2 ]
+	do
+		[ "$has_kernel" = "1" ] && {
+			local kern_ubivol="$(nand_find_volume $ubidev kernel)"
+			tar xf $tar_file sysupgrade-$board_name/kernel -O | \
+				ubiupdatevol /dev/$kern_ubivol -s $kernel_length -
+		}
+		local kernfs_ubi_sum=`(dd if=/dev/$kern_ubivol bs=$kernel_length count=1 | md5sum) 2> /dev/null`
+		[ "$kernel_sum" = "$kernfs_ubi_sum" ] && {
+			echo "upgrade kernel successful"
+			break
+		}
+		index=`expr $index + 1`
+	done
+
+	[ "$index" != "2" ] && {
+		index=0
 	}
 
-	local root_ubivol="$(nand_find_volume $ubidev rootfs)"
-	tar xf $tar_file sysupgrade-$board_name/root -O | \
-		ubiupdatevol /dev/$root_ubivol -s $rootfs_length -
+	while [ $index -lt 2 ]
+	do
+		local root_ubivol="$(nand_find_volume $ubidev rootfs)"
+		tar xf $tar_file sysupgrade-$board_name/root -O | \
+			ubiupdatevol /dev/$root_ubivol -s $rootfs_length -
 
-	nand_do_upgrade_success
+		local rootfs_ubi_sum=`(dd if=/dev/$root_ubivol bs=$rootfs_length count=1 | md5sum) 2> /dev/null`
+		[ "$rootfs_sum" = "$rootfs_ubi_sum" ] && {
+			echo "upgrade rootfs successful"
+			break
+		}
+		index=`expr $index + 1`
+	done
+
+	if [ "$index" = "2" ]; then
+		echo "Error updates"
+		nand_critical_error
+	else
+		nand_do_upgrade_success
+	fi
 }
 
 # Recognize type of passed file and start the upgrade process
