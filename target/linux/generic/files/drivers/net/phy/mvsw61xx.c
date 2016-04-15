@@ -783,6 +783,41 @@ static int mvsw61xx_reset(struct switch_dev *dev)
 	return 0;
 }
 
+static int mvsw61xx_get_regvalue(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	struct mvsw61xx_state *state = get_state(dev);
+	uint8_t reg = state->ports[val->port_vlan].reg;
+	uint16_t result;
+    mvsw61xx_phy_read16(dev, val->port_vlan, reg, &result);
+
+	val->len = snprintf(state->buf, 128, "%d | 0x%X", reg, result);
+	val->value.s = state->buf;
+
+	return 0;
+}
+
+static int mvsw61xx_set_regvalue(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	struct mvsw61xx_state *state = get_state(dev);
+	int port = val->port_vlan;
+
+	uint8_t reg;
+	uint16_t value;
+
+	if( strchr( val->value.s, ' ' ) == NULL ){ // have parameter
+		sscanf(val->value.s, "%hhx", &reg);
+		state->ports[port].reg = reg;
+	} else {
+		sscanf(val->value.s, "%hhd %hd", &reg, &value);
+		state->ports[port].reg = reg;
+		mvsw61xx_phy_write16(dev, port, reg, value);
+	}
+
+	return 0;
+}
+
 enum {
 	MVSW61XX_ENABLE_VLAN,
 };
@@ -795,6 +830,7 @@ enum {
 enum {
 	MVSW61XX_PORT_MASK,
 	MVSW61XX_PORT_QMODE,
+	MVSW61XX_PORT_REGISTER,
 };
 
 static const struct switch_attr mvsw61xx_global[] = {
@@ -835,6 +871,14 @@ static const struct switch_attr mvsw61xx_port[] = {
 		.name = "mask",
 		.get = mvsw61xx_get_port_mask,
 		.set = NULL,
+	},
+	[MVSW61XX_PORT_REGISTER] = {
+		.id = MVSW61XX_PORT_REGISTER,
+		.type = SWITCH_TYPE_STRING,
+		.description = "MII register and value",
+		.name = "regvalue",
+		.get = mvsw61xx_get_regvalue,
+		.set = mvsw61xx_set_regvalue,
 	},
 	[MVSW61XX_PORT_QMODE] = {
 		.id = MVSW61XX_PORT_QMODE,

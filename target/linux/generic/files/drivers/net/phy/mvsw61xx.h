@@ -252,6 +252,7 @@ struct mvsw61xx_state {
 		u16 pvid;
 		u16 mask;
 		u8 qmode;
+		u8 reg;
 	} ports[MV_PORTS];
 
 	struct vlan_state {
