@@ -147,6 +147,32 @@ mvsw61xx_wait_mask_s(struct switch_dev *dev, int addr,
 	return -ETIMEDOUT;
 }
 
+int mvsw61xx_phy_read16(struct switch_dev *dev, int addr, u8 reg, u16 *value) {
+	uint16_t cmd;
+
+	if( mvsw61xx_wait_mask_s(dev, MV_GLOBAL2REG(SMI_PHY_CMD), 0x8000, 0) ){	return -ETIMEDOUT; }
+
+	cmd = (1 << 15) | (1 << 12) | (0x2 << 10) | (addr << 5) | reg;
+	sw16(dev, MV_GLOBAL2REG(SMI_PHY_CMD), cmd);
+	if( mvsw61xx_wait_mask_s(dev, MV_GLOBAL2REG(SMI_PHY_CMD), 0x8000, 0) ){	return -ETIMEDOUT; }
+	*value = sr16(dev, MV_GLOBAL2REG(SMI_PHY_DATA));
+
+	return 0;
+}
+
+int mvsw61xx_phy_write16(struct switch_dev *dev, int addr, u8 reg, u16 value) {
+	uint16_t cmd;
+	if( mvsw61xx_wait_mask_s(dev, MV_GLOBAL2REG(SMI_PHY_CMD), 0x8000, 0) ){	return -ETIMEDOUT; }
+
+	cmd = (1 << 15) | (1 << 12) | (0x1 << 10) | (addr << 5) | reg;
+	sw16(dev, MV_GLOBAL2REG(SMI_PHY_DATA), value);
+	sw16(dev, MV_GLOBAL2REG(SMI_PHY_CMD), cmd);
+
+	if( mvsw61xx_wait_mask_s(dev, MV_GLOBAL2REG(SMI_PHY_CMD), 0x8000, 0) ){	return -ETIMEDOUT; }
+
+	return 0;
+}
+
 static struct vlan_state* mvsw61xx_get_vlan_by_vid(struct switch_dev *dev, u16 vid) {
 	int i;
 	struct mvsw61xx_state *state = get_state(dev);
@@ -808,6 +834,8 @@ static const struct switch_dev_ops mvsw61xx_ops = {
 	.set_port_pvid = mvsw61xx_set_port_pvid,
 	.get_vlan_ports = mvsw61xx_get_vlan_ports,
 	.set_vlan_ports = mvsw61xx_set_vlan_ports,
+	.phy_read16 = mvsw61xx_phy_read16,
+	.phy_write16 = mvsw61xx_phy_write16,
 	.apply_config = mvsw61xx_apply,
 	.reset_switch = mvsw61xx_reset,
 };
