@@ -295,42 +295,73 @@ static int
 mvsw61xx_set_port_link(struct switch_dev *dev, int port,
 		struct switch_port_link *link)
 {
-	u16 reg,ctl,status, state;
+	u16 reg,ctl,status, state, anar, ccr, gcr;
 	reg = sr16(dev, MV_PORTREG(PHYCTL, port));
+
+	mvsw61xx_phy_read16 (dev, port, 0x04, &anar);
+	anar &= 0xfc1f;
+	mvsw61xx_phy_read16(dev, port, 0x00, &ccr);
+	mvsw61xx_phy_read16(dev, port, 0x09, &gcr);
 	reg &= (0xc000); // clear all except rgmii timings
-	if(link->aneg) {
-		reg |= MV_PORT_STATUS_SPEED_AUTO;	// disable speed force
-		reg &= ~(1 << 2);					// disable duplex force
-		reg &= ~(1 << 4);					// disable link force
-		reg &= ~(1 << 6);					// disable flow control force
-	} else {
+
+	uint16_t spd = 0;
+	uint16_t spdg = 0;
+
+	// speed not set, use auto
+	if ( link->speed == SWITCH_PORT_SPEED_UNKNOWN ) {
+		reg |= MV_PORT_STATUS_SPEED_AUTO;
+		reg &= ~(1 << 2);
+		reg &= ~(1 << 4);
+		reg &= ~(1 << 6);
+		gcr |= (0x3 << 8);
+	} else { // force
+		if( link->speed == SWITCH_PORT_SPEED_10 ) {
+			// set speed 10Mbps
+			// set duplex
+			// set autonegation settings
+			spd = 1 << 5;
+			gcr &= ~(0x3 << 8);
+		} else if ( link->speed == SWITCH_PORT_SPEED_100 ) {
+			reg |= 0x1;
+			spd = 1 << 7;
+			gcr &= ~(0x3 << 8);
+		} else if (link->speed == SWITCH_PORT_SPEED_1000 ) {
+			reg |= 0x2;
+			if( link->duplex){
+				gcr &= ~(1 << 8);
+				gcr |= 1 << 9;
+			} else {
+				gcr |= 1 << 8;
+				gcr &= ~(1 << 9);
+			}
+
+		} else { // unknown speed
+			return -ENOTSUPP;
+		}
+
 		if (link->duplex) {
 			reg |= (1 << 3);
+			spd = spd << 1; // copper duplex
 		} else {
 			reg &= ~(1 << 3);
 		}
 		reg |= (1 << 2);					// force duplex
-		switch(link->speed) {
-			case SWITCH_PORT_SPEED_10:		// left as 0b00
-				break;
-			case SWITCH_PORT_SPEED_100:
-				reg |= 0x1;
-				break;
-			case SWITCH_PORT_SPEED_1000:
-				reg |= 0x2;
-				break;
-			default:
-				return -ENOTSUPP;
-				break;
-		}
 	}
+	anar |= spd;
+	ccr |= 1 << 9;
+
 	status = sr16(dev, MV_PORTREG(CONTROL, port));
 	state = status & 0x3;
 	status &= ~(0x3);
+	reg &= ~(1 << 4);
 	sw16(dev, MV_PORTREG(CONTROL, port), status);	// disable port
 	sw16(dev, MV_PORTREG(PHYCTL, port), reg);		// set port link
 	status |= state;
 	sw16(dev, MV_PORTREG(CONTROL, port), status);	// enable port
+	mvsw61xx_phy_write16(dev, port, 0x4, anar);
+	mvsw61xx_phy_write16(dev, port, 0x9, gcr);
+	// reset autonegation sequence
+	mvsw61xx_phy_write16(dev, port, 0x0, ccr);
 
 	return 0;
 }
