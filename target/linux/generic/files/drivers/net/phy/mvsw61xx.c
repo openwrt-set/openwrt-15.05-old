@@ -26,6 +26,8 @@
 
 #include "mvsw61xx.h"
 
+extern u64 uevent_next_seqnum(void);
+
 MODULE_DESCRIPTION("Marvell 88E61xx Switch driver");
 MODULE_AUTHOR("Claudio Leite <leitec@staticky.com>");
 MODULE_AUTHOR("Nikita Nazarenko <nnazarenko@radiofid.com>");
@@ -629,7 +631,7 @@ static void mvsw61xx_vlan_port_config(struct switch_dev *dev, int vno)
 
 	v = mvsw61xx_get_vlan_by_vid(dev, vno);
 	if( v == NULL )
-		return -ENOENT;
+		return;
 
 	for (i = 0; i < dev->ports; i++) {
 		if (!(v->mask & (1 << i)))
@@ -791,7 +793,7 @@ static int mvsw61xx_get_regvalue(struct switch_dev *dev,
 	uint16_t result;
     mvsw61xx_phy_read16(dev, val->port_vlan, reg, &result);
 
-	val->len = snprintf(state->buf, 128, "%d | 0x%X", reg, result);
+	val->len = snprintf(state->buf, state->buf_size, "%d | 0x%X", reg, result);
 	val->value.s = state->buf;
 
 	return 0;
@@ -831,7 +833,181 @@ enum {
 	MVSW61XX_PORT_MASK,
 	MVSW61XX_PORT_QMODE,
 	MVSW61XX_PORT_REGISTER,
+	MVSW61XX_PORT_STAT_INGRESS,
+	MVSW61XX_PORT_STAT_EGRESS,
 };
+
+struct mvsw61xx_counter mib_counters[] = {
+	{ MVSW61XX_COUNTER_IN, 0x0, 2, "InGoodOctets"},
+	{ MVSW61XX_COUNTER_IN, 0x2, 1, "InBad"},
+	{ MVSW61XX_COUNTER_IN, 0x4, 1, "InUnicast"},
+	{ MVSW61XX_COUNTER_IN, 0x6, 1, "InBroadcasts"},
+	{ MVSW61XX_COUNTER_IN, 0x7, 1, "InMulticasts"},
+	{ MVSW61XX_COUNTER_IN, 0x16, 1, "InPause"},
+	{ MVSW61XX_COUNTER_IN, 0x18, 1, "InUndersize"},
+	{ MVSW61XX_COUNTER_IN, 0x19, 1, "InFragments"},
+	{ MVSW61XX_COUNTER_IN, 0x1A, 1, "InOversize"},
+	{ MVSW61XX_COUNTER_IN, 0x1B, 1, "InJabber"},
+	{ MVSW61XX_COUNTER_IN, 0x1C, 1, "InRxErr"},
+	{ MVSW61XX_COUNTER_IN, 0x1D, 1, "InFCSErr"},
+	{ MVSW61XX_COUNTER_OUT, 0xE, 2, "OutOctets"},
+	{ MVSW61XX_COUNTER_OUT, 0x10, 1, "OutUnicasts"},
+	{ MVSW61XX_COUNTER_OUT, 0x12, 1, "OutMulticasts"},
+	{ MVSW61XX_COUNTER_OUT, 0x13, 1, "OutBroadcasts"},
+	{ MVSW61XX_COUNTER_OUT, 0x15, 1, "OutPause"},
+	{ MVSW61XX_COUNTER_OUT, 0x1E, 1, "Collisions"},
+	{ MVSW61XX_COUNTER_OUT, 0x05, 1, "Deffered"},
+	{ MVSW61XX_COUNTER_OUT, 0x14, 1, "Single"},
+	{ MVSW61XX_COUNTER_OUT, 0x17, 1, "Multiple"},
+	{ MVSW61XX_COUNTER_OUT, 0x11, 1, "Excessive"},
+	{ MVSW61XX_COUNTER_OUT, 0x03, 1, "OutFCSErr"},
+	{ MVSW61XX_COUNTER_OUT, 0x1F, 1, "Late"},
+	{ MVSW61XX_COUNTER_HISTOGRAM, 0x8, 1, "LE64"},
+	{ MVSW61XX_COUNTER_HISTOGRAM, 0x9, 1, "65-127"},
+	{ MVSW61XX_COUNTER_HISTOGRAM, 0xA, 1, "128-255"},
+	{ MVSW61XX_COUNTER_HISTOGRAM, 0xB, 1, "256-511"},
+	{ MVSW61XX_COUNTER_HISTOGRAM, 0xC, 1, "512-1023"},
+	{ MVSW61XX_COUNTER_HISTOGRAM, 0xD, 1, "GE1024"},
+};
+
+static int mvsw61xx_get_stat_ingress(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	struct mvsw61xx_state *state = get_state(dev);
+	int port;
+	int len;
+	int i;
+	u16 reg;
+
+	len = 0;
+	port = val->port_vlan + 1;
+	
+	// capture counters for port
+	reg = 0x0 | ( (port & 0xf) << 5 ) | (0x5 << 12) | (1 << 16);
+	
+	mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(STAT_CONTROL), (1 << 15), 0);
+		
+	sw16(dev, MV_GLOBALREG(STAT_CONTROL), reg);
+	
+	mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(STAT_CONTROL), (1 << 15), 0);
+
+	// read ingress counters
+	len = snprintf(state->buf + len, state->buf_size, "\n");
+	for( i = 0; i < ARRAY_SIZE(mib_counters); i++ ) {
+		struct mvsw61xx_counter *c = &mib_counters[i];
+		u64 value = 0;
+		if( c->type == MVSW61XX_COUNTER_OUT )
+			continue;
+
+		if( c->len == 1 ) {
+			reg = c->ptr | ( (port & 0xf) << 5 ) | (0x4 << 12) | (1 << 15);
+			if( c->type == MVSW61XX_COUNTER_HISTOGRAM)
+				reg |= (0x1 << 10);
+			sw16(dev, MV_GLOBALREG(STAT_CONTROL), reg);
+			mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(STAT_CONTROL), (1 << 15), 0);
+
+			reg = sr16(dev, MV_GLOBALREG(STATLO));
+			value = reg;
+			reg = sr16(dev, MV_GLOBALREG(STATHI));
+			value = value + (reg << 16);
+
+		} else if( c->len == 2 ) {
+			reg = c->ptr | ( (port & 0xf) << 5 ) | (0x4 << 12) | (1 << 15);
+			sw16(dev, MV_GLOBALREG(STAT_CONTROL), reg);
+			mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(STAT_CONTROL), (1 << 15), 0);
+
+			reg = sr16(dev, MV_GLOBALREG(STATLO));
+			value = reg;
+			reg = sr16(dev, MV_GLOBALREG(STATHI));
+			value = value + (reg << 16);
+
+			reg = (c->ptr + 1) | ( (port & 0xf) << 5 ) | (0x4 << 12) | (1 << 15);
+			sw16(dev, MV_GLOBALREG(STAT_CONTROL), reg);
+			mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(STAT_CONTROL), (1 << 15), 0);
+
+			reg = sr16(dev, MV_GLOBALREG(STATLO));
+			value = value + ((u64)reg << 32 );
+			reg = sr16(dev, MV_GLOBALREG(STATHI));
+			value = value + ((u64)reg << 48);
+		}
+		len += snprintf(state->buf + len, state->buf_size, "\t\t%s : %llu\n", c->name, value);
+	}
+
+	// format output string
+	val->value.s = state->buf;
+	val->len = len;
+	return 0;
+}
+
+static int mvsw61xx_get_stat_egress(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	struct mvsw61xx_state *state = get_state(dev);
+	int port;
+	int len;
+	int i;
+	u16 reg;
+
+	len = 0;
+	port = val->port_vlan + 1;
+	
+	// capture counters for port
+	reg = 0x0 | ( (port & 0xf) << 5 ) | (0x5 << 12) | (1 << 16);
+	
+	mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(STAT_CONTROL), (1 << 15), 0);
+		
+	sw16(dev, MV_GLOBALREG(STAT_CONTROL), reg);
+	
+	mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(STAT_CONTROL), (1 << 15), 0);
+
+	// read ingress counters
+	len = snprintf(state->buf + len, state->buf_size, "\n");
+	for( i = 0; i < ARRAY_SIZE(mib_counters); i++ ) {
+		struct mvsw61xx_counter *c = &mib_counters[i];
+		u64 value = 0;
+		if( c->type == MVSW61XX_COUNTER_IN )
+			continue;
+
+		if( c->len == 1 ) {
+			reg = c->ptr | ( (port & 0xf) << 5 ) | (0x4 << 12) | (1 << 15);
+			if( c->type == MVSW61XX_COUNTER_HISTOGRAM)
+				reg |= (0x1 << 10);
+			sw16(dev, MV_GLOBALREG(STAT_CONTROL), reg);
+			mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(STAT_CONTROL), (1 << 15), 0);
+
+			reg = sr16(dev, MV_GLOBALREG(STATLO));
+			value = reg;
+			reg = sr16(dev, MV_GLOBALREG(STATHI));
+			value = value + (reg << 16);
+
+		} else if( c->len == 2 ) {
+			reg = c->ptr | ( (port & 0xf) << 5 ) | (0x4 << 12) | (1 << 15);
+			sw16(dev, MV_GLOBALREG(STAT_CONTROL), reg);
+			mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(STAT_CONTROL), (1 << 15), 0);
+
+			reg = sr16(dev, MV_GLOBALREG(STATLO));
+			value = reg;
+			reg = sr16(dev, MV_GLOBALREG(STATHI));
+			value = value + (reg << 16);
+
+			reg = (c->ptr + 1) | ( (port & 0xf) << 5 ) | (0x4 << 12) | (1 << 15);
+			sw16(dev, MV_GLOBALREG(STAT_CONTROL), reg);
+			mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(STAT_CONTROL), (1 << 15), 0);
+
+			reg = sr16(dev, MV_GLOBALREG(STATLO));
+			value = (u64)value + ((u64)reg << 32);
+			reg = sr16(dev, MV_GLOBALREG(STATHI));
+			value = (u64)value + ((u64)reg << 48);
+		}
+		len += snprintf(state->buf + len, state->buf_size, "\t\t%s : %llu\n", c->name, value);
+	}
+
+	// format output string
+	val->value.s = state->buf;
+	val->len = len;
+	return 0;
+}
+
 
 static const struct switch_attr mvsw61xx_global[] = {
 	[MVSW61XX_ENABLE_VLAN] = {
@@ -888,6 +1064,22 @@ static const struct switch_attr mvsw61xx_port[] = {
 		.get = mvsw61xx_get_port_qmode,
 		.set = mvsw61xx_set_port_qmode,
 	},
+	[MVSW61XX_PORT_STAT_INGRESS] = {
+		.id = MVSW61XX_PORT_STAT_INGRESS,
+		.type = SWITCH_TYPE_STRING,
+		.description = "Port ingress counters",
+		.name = "ingress_stat",
+		.get = mvsw61xx_get_stat_ingress,
+		.set = NULL,
+	},
+	[MVSW61XX_PORT_STAT_EGRESS] = {
+		.id = MVSW61XX_PORT_STAT_EGRESS,
+		.type = SWITCH_TYPE_STRING,
+		.description = "Port egress counters",
+		.name = "egress_stat",
+		.get = mvsw61xx_get_stat_egress,
+		.set = NULL,
+	},
 };
 
 static const struct switch_dev_ops mvsw61xx_ops = {
@@ -917,6 +1109,190 @@ static const struct switch_dev_ops mvsw61xx_ops = {
 
 /* end swconfig stuff */
 
+static int mv_event_add_var(struct mv_link_event *event, int argv,
+                const char *format, ...)
+{
+	static char buf[128];
+	char *s;
+	va_list args;
+	int len;
+
+	if (argv)
+		return 0;
+
+	va_start(args, format);
+	len = vsnprintf(buf, sizeof(buf), format, args);
+	va_end(args);
+
+	if (len >= sizeof(buf)) {
+		return -ENOMEM;
+	}
+
+	s = skb_put(event->skb, len + 1);
+	strcpy(s, buf);
+
+	return 0;
+}
+
+static int mvsw61xx_fill_link_event(struct mv_link_event* evt) {
+	int ret;
+
+	ret = mv_event_add_var(evt,0,"HOME=%s","/");
+	if( ret ) return ret;
+	
+	ret = mv_event_add_var(evt,0,"PATH=%s","/sbin:/bin:/usr/sbin:/usr/bin");
+	if( ret ) return ret;
+	
+	ret = mv_event_add_var(evt,0,"SUBSYSTEM=%s","switch");
+	if( ret ) return ret;
+	
+	ret = mv_event_add_var(evt,0,"ACTION=%s",evt->link ? "up" : "down");
+	if( ret ) return ret;
+	
+	ret = mv_event_add_var(evt,0,"PORT=%d",evt->port);
+	if( ret ) return ret;
+
+	switch(evt->speed) {
+		case MV_PORT_STATUS_SPEED_10:
+			ret = mv_event_add_var(evt,0,"SPEED=%s","10");
+			break;
+		case MV_PORT_STATUS_SPEED_100:
+			ret = mv_event_add_var(evt,0,"SPEED=%s","10");
+			break;
+		case MV_PORT_STATUS_SPEED_1000:
+			ret = mv_event_add_var(evt,0,"SPEED=%s","1000");
+			break;
+	}
+	if( ret ) return ret;
+	if( evt->duplex) {
+		ret = mv_event_add_var(evt,0,"DUPLEX=%s","full");
+	} else {
+		ret = mv_event_add_var(evt,0,"DUPLEX=%s","half");
+	}
+	ret = mv_event_add_var(evt,0,"SEQNUM=%llu", uevent_next_seqnum());
+
+	return ret;
+}
+
+static void mvsw61xx_link_event_work(struct work_struct *ugly) {
+	struct mv_link_event* evt;
+	int ret = 0;
+
+	evt = container_of(ugly, struct mv_link_event, work);
+
+	evt->skb = alloc_skb(2048, GFP_KERNEL);
+
+	if(!evt->skb)
+		goto free_evt;
+	
+	ret = mv_event_add_var(evt,0,"%s@","switch");
+	if( ret ) goto out_free_skb;
+	
+	ret = mvsw61xx_fill_link_event(evt);
+	if( ret ) goto out_free_skb;
+
+	NETLINK_CB(evt->skb).dst_group = 1;
+	broadcast_uevent(evt->skb, 0, 1, GFP_KERNEL);
+out_free_skb:
+	if (ret) {
+		kfree_skb(evt->skb);
+	}
+
+free_evt:
+	kfree(evt);
+}
+
+static int mvsw61xx_create_link_event(u8 port, u16 link, u16 duplex, u16 speed) {
+	struct mv_link_event* evt;
+
+	evt = kzalloc(sizeof(struct mv_link_event), GFP_KERNEL);
+
+	if(!evt) 
+		return -ENOMEM;
+
+	evt->port = port;
+	evt->link = link;
+	evt->duplex = duplex;
+	evt->speed = speed;
+
+	INIT_WORK(&evt->work,(void*)mvsw61xx_link_event_work);
+	schedule_work(&evt->work);
+	return 0;
+}
+
+static void mvsw61xx_link_poll_work(struct work_struct *ugly) {
+	struct mvsw61xx_state *state;
+	int i;
+	state = container_of(ugly, struct mvsw61xx_state, link_poll_work);
+	
+	for( i=0; i < MV_PORTS; i++ ){
+	// get port status
+		u16 status = sr16(&state->dev, MV_PORTREG(STATUS, i));
+		u16 link, speed, duplex;
+		link = status & MV_PORT_STATUS_LINK;
+		speed = (status & MV_PORT_STATUS_SPEED_MASK) >> MV_PORT_STATUS_SPEED_SHIFT;
+		duplex = status & MV_PORT_STATUS_FDX;
+		if( state->ports[i].link_status != link ) {
+			printk(KERN_DEBUG "Link changed. Port: %d, link: 0x%X/0x%X\n", i, link, state->ports[i].link_status);
+			//make hotplug event
+			state->ports[i].link_status = link;
+			mvsw61xx_create_link_event(i, link, duplex, speed);
+		}
+	}
+	state->link_poll_timer.expires = round_jiffies(jiffies + HZ);
+	add_timer(&state->link_poll_timer);
+}
+
+static void mvsw61xx_link_int_work(struct work_struct *ugly) {
+	struct mvsw61xx_state *state;
+	u16 reg;
+	int i;
+	state = container_of(ugly, struct mvsw61xx_state, link_poll_work);
+
+	reg = sr16(&state->dev, MV_GLOBALREG(STATUS));
+
+	// Handle DevInt
+	if( reg & (1 << 7 ) ) {
+		
+		reg = sr16(&state->dev, MV_GLOBAL2REG(INT_SRC));
+
+		// handle phy interrupts
+		for( i=0; i < 5; i++ ) {
+			if( reg & (1 << i ) ) {
+				reg = sr16(&state->dev, MV_PHYREG(INTERRUPT_STATUS, i));
+				if( reg & (1 << 10 ) ) {
+					printk(KERN_DEBUG "LINK CHANGED\n");
+				}
+				if( reg & (1 << 13 ) ) {
+					printk(KERN_DEBUG "DUPLEX CHANGED\n");
+				}
+				if( reg & (1 << 14 ) ) {
+					printk(KERN_DEBUG "SPEED CHANGED\n");
+				}
+			}
+		}
+
+		// Handle SERDES interrupt
+		if( reg & (1 << 11) ) {
+		}
+	}	
+	// handle other dev interrupts
+}
+
+static void mvsw61xx_link_poll_timer(unsigned long _dst) {
+	struct mvsw61xx_state *state = (struct mvsw61xx_state *) _dst;
+
+	schedule_work(&state->link_poll_work);
+}
+
+static irqreturn_t mvsw61xx_irq_handler( int irq, void* data){
+	struct mvsw61xx_state *state = data;
+
+	schedule_work(&state->link_poll_work);
+
+	return IRQ_HANDLED;
+}
+
 static int mvsw61xx_probe(struct platform_device *pdev)
 {
 	struct mvsw61xx_state *state;
@@ -929,6 +1305,14 @@ static int mvsw61xx_probe(struct platform_device *pdev)
 	state = kzalloc(sizeof(*state), GFP_KERNEL);
 	if (!state)
 		return -ENOMEM;
+
+	state->buf_size = PAGE_SIZE;
+	state->buf = kzalloc(state->buf_size, GFP_KERNEL);
+
+	if( !state->buf ){
+		kfree(state);
+		return -ENOMEM;
+	}
 
 	mdio = of_parse_phandle(np, "mii-bus", 0);
 	if (!mdio) {
@@ -997,6 +1381,14 @@ static int mvsw61xx_probe(struct platform_device *pdev)
 		state->cpu_port1 = val;
 	else
 		state->cpu_port1 = -1;
+
+	state->int_gpio=0;
+	INIT_WORK(&state->link_poll_work, mvsw61xx_link_poll_work);
+	init_timer(&state->link_poll_timer);
+	state->link_poll_timer.data = (unsigned long)state;
+	state->link_poll_timer.function = mvsw61xx_link_poll_timer;
+	state->link_poll_timer.expires = round_jiffies(jiffies + HZ);
+	add_timer(&state->link_poll_timer);
 
 	state->dev.vlans = MV_MAX_VLAN;
 	state->dev.cpu_port = state->cpu_port0;

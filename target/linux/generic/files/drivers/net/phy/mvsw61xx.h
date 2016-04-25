@@ -27,6 +27,28 @@
 #define MV_MAX_VLAN			4096
 
 enum {
+	MVSW61XX_COUNTER_IN = 0x0,
+	MVSW61XX_COUNTER_OUT = 0x1,
+	MVSW61XX_COUNTER_HISTOGRAM = 0x2
+};
+
+struct mvsw61xx_counter {
+	u8 type; // 1 - in, 2 - out, 3 - histogram
+	u8 ptr; // number written to statsptr
+	u8 len; // some counters may contain more than one field
+	char* name; // counter name
+};
+
+struct mv_link_event {
+	u8 port;
+	u16 link;
+	u16 duplex;
+	u16 speed;
+	struct sk_buff *skb;
+	struct work_struct work;
+};
+
+enum {
 	MV_PORT_STATUS			= 0x00,
 	MV_PORT_PHYCTL			= 0x01,
 	MV_PORT_JAMCTL			= 0x02,
@@ -41,8 +63,39 @@ enum {
 	MV_PORT_RX_DISCARD_HIGH		= 0x11,
 	MV_PORT_IN_FILTERED		= 0x12,
 	MV_PORT_OUT_ACCEPTED		= 0x13,
+	MV_PORT_LED_CONTROL		= 0x16,
 };
 #define MV_PORTREG(_type, _port) MV_SWITCHPORT(_port), MV_PORT_##_type
+
+enum {
+	MV_PHY_CONTROL 				= 0x00,
+	MV_PHY_STATUS				= 0x01,
+	MV_PHY_ID_1				= 0x02,
+	MV_PHY_ID_2				= 0x03,
+	MV_PHY_AUTONEG_ADV			= 0x04,
+	MV_PHY_LINK_PARTNER_ABILITY		= 0x05,
+	MV_PHY_AUTONEG_EXPANSION		= 0x06,
+	MV_PHY_NEXT_PAGE_TRANSMIT		= 0x07,
+	MV_PHY_LINK_PARTNER_NEXT_PAGE		= 0x08,
+	MV_PHY_MASTER_SLAVE_CONTROL		= 0x09,
+	MV_PHY_MASTER_SLAVE_STATUS		= 0x0A,
+	MV_PHY_EXTENDED_STATUS 			= 0x0F,
+	MV_PHY_SPECIFIC_CONTROL_1		= 0x10,
+	MV_PHY_SPECIFIC_STATUS_1		= 0x11,
+	MV_PHY_INTERRUPT_ENABLE			= 0x12,
+	MV_PHY_SPECIFIC_STATUS_2		= 0x13,
+	MV_PHY_SPECIFIC_STATUS_3		= 0x14,
+	MV_PHY_RECIEVE_ERROR_COUNTER		= 0x15,
+	MV_PHY_PAGE_REGISTER			= 0x16,
+	MV_PHY_INTERRUPT_STATUS			= 0x17,
+	MV_PHY_PAGE_SPECIFIC_1			= 0x18,
+	MV_PHY_PAGE_SPECIFIC_2			= 0x19,
+	MV_PHY_PAGE_SPECIFIC_3			= 0x1A,
+	MV_PHY_PAGE_SPECIFIC_4			= 0x1B,
+	MV_PHY_PAGE_SPECIFIC_5			= 0x1C
+};
+
+#define MV_PHYREG(_type, _port) _port, MV_PHY_##_type
 
 enum {
 	MV_PORT_STATUS_FDX		= (1 << 10),
@@ -160,10 +213,15 @@ enum {
 	MV_GLOBAL_VTU_DATA2		= 0x08,
 	MV_GLOBAL_VTU_DATA3		= 0x09,
 	MV_GLOBAL_CONTROL2		= 0x1c,
+	MV_GLOBAL_STAT_CONTROL		= 0x1D,
+	MV_GLOBAL_STATHI		= 0x1E,
+	MV_GLOBAL_STATLO		= 0x1F,
 };
 #define MV_GLOBALREG(_type) MV_SWITCH_GLOBAL, MV_GLOBAL_##_type
 
 enum {
+	MV_GLOBAL2_INT_SRC		= 0x00,
+	MV_GLOBAL2_INT_MASK		= 0x01,
 	MV_GLOBAL2_SDET_POLARITY	= 0x1d,
 	MV_GLOBAL2_SMI_PHY_CMD		= 0x18,
 	MV_GLOBAL2_SMI_PHY_DATA		= 0x19,
@@ -252,6 +310,7 @@ struct mvsw61xx_state {
 		u16 pvid;
 		u16 mask;
 		u8 qmode;
+		u16 link_status;
 		u8 reg;
 	} ports[MV_PORTS];
 
@@ -264,7 +323,14 @@ struct mvsw61xx_state {
 		u32 port_sstate;
 	} vlans[MV_VLANS];
 
-	char buf[128];
+	struct mutex irq_lock;
+	int irq;
+	int int_gpio;
+	struct timer_list link_poll_timer;
+	struct work_struct link_poll_work;
+
+	char *buf;
+	unsigned int buf_size;
 };
 
 #define get_state(_dev) container_of((_dev), struct mvsw61xx_state, dev)
