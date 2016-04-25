@@ -822,6 +822,7 @@ static int mvsw61xx_set_regvalue(struct switch_dev *dev,
 
 enum {
 	MVSW61XX_ENABLE_VLAN,
+	MVSW61XX_LAN_DIODE,
 };
 
 enum {
@@ -1008,6 +1009,59 @@ static int mvsw61xx_get_stat_egress(struct switch_dev *dev,
 	return 0;
 }
 
+static int mvsw61xx_get_vlan_lan_diode(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	struct mvsw61xx_state *state = get_state(dev);
+
+	if( state == NULL )
+		return -1;
+
+	val->value.i = state->vlan_diode;
+
+	return 0;
+}
+
+static int mvsw61xx_set_vlan_lan_diode(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	int i;
+	u16 vlan_mask = 0xffff;
+	u16 data;
+
+	struct mvsw61xx_state *state = get_state(dev);
+	int vlan = val->value.i;
+
+	for( i=0; i < MV_VLANS; i++ ) {
+		if( state->vlans[i].vid == vlan ) {
+			vlan_mask = state->vlans[i].mask & 0x1F;
+			break;
+		}
+	}
+
+	if( vlan_mask == 0xffff )
+		goto vlan_not_found;
+
+	/* 
+	set Port0 special function
+	register index 0x7
+	
+	LED control format: 15 - update, 14-12 - pointer, 0-10 - data
+	*/
+	data = (1 << 15) |
+			(0x7 << 12) |
+			(vlan_mask & 0x7ff);
+	
+	sw16(dev, MV_PORTREG(LED_CONTROL, 0), data);
+
+	state->vlan_diode = val->value.i;
+	return 0;
+	
+vlan_not_found:
+	return 0;
+}
+
+
 
 static const struct switch_attr mvsw61xx_global[] = {
 	[MVSW61XX_ENABLE_VLAN] = {
@@ -1017,6 +1071,14 @@ static const struct switch_attr mvsw61xx_global[] = {
 		.description = "Enable 802.1q VLAN support",
 		.get = mvsw61xx_get_enable_vlan,
 		.set = mvsw61xx_set_enable_vlan,
+	},
+	[MVSW61XX_LAN_DIODE] = {
+		.id = MVSW61XX_LAN_DIODE,
+		.type = SWITCH_TYPE_INT,
+		.name = "vlan_lan_diode",
+		.description = "VLAN number which ports are used for lan diode blinking",
+		.get = mvsw61xx_get_vlan_lan_diode,
+		.set = mvsw61xx_set_vlan_lan_diode,
 	},
 };
 

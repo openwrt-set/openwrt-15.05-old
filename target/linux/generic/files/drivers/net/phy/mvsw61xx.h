@@ -305,6 +305,7 @@ struct mvsw61xx_state {
 	int cpu_port1;
 
 	int vlan_enabled;
+	int vlan_diode;
 	struct port_state {
 		u16 fdb;
 		u16 pvid;
