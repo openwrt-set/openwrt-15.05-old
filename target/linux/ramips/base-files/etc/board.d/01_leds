@@ -270,6 +270,9 @@ case $board in
 	zte-q7)
 		set_wifi_led "zte:blue:status"
 		;;
+	irz_ra01)
+		set_wifi_led "POWER"
+		;;
 	irz_ra02)
 		set_wifi_led "rt2800pci-phy0::radio"
 		;;

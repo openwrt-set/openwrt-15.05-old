@@ -123,7 +123,7 @@
 
     		power {
 				label = "POWER";
-				gpios = <&gpio0 11 1>;
+				gpios = <&gpio0 11 0>;
 				default-state = "on";
 		};
 	};
