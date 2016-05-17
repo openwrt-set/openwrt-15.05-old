@@ -103,7 +103,7 @@
  		int i;
  //		u32 phy_val;
  		u32 val;
-@@ -1049,7 +1049,7 @@ esw_get_port_tr_badgood(struct switch_de
+@@ -1089,7 +1089,7 @@ esw_get_port_tr_badgood(struct switch_de
  	int shift = attr->id == RT5350_ESW_ATTR_PORT_TR_GOOD ? 0 : 16;
  	u32 reg;
  

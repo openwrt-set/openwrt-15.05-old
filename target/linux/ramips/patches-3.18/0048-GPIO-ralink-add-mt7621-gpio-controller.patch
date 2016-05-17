@@ -41,7 +41,7 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
  config GPIO_VIPERBOARD
 --- a/drivers/gpio/Makefile
 +++ b/drivers/gpio/Makefile
-@@ -107,3 +107,5 @@ obj-$(CONFIG_GPIO_XILINX)	+= gpio-xilinx
+@@ -108,3 +108,5 @@ obj-$(CONFIG_GPIO_XILINX)	+= gpio-xilinx
  obj-$(CONFIG_GPIO_XTENSA)	+= gpio-xtensa.o
  obj-$(CONFIG_GPIO_ZEVIO)	+= gpio-zevio.o
  obj-$(CONFIG_GPIO_ZYNQ)		+= gpio-zynq.o
