@@ -946,7 +946,7 @@ Image/Build/Profile/MicroWRT=$(call BuildFirmware/CustomFlash/$(1),$(1),microwrt
 
 Image/Build/Profile/MT7620aPINMODULE=$(call BuildFirmware/Default16M/$(1),$(1),mt7620apinmodule,MT7620aPINMODULE)
 Image/Build/Profile/RX15=$(call BuildFirmware/CustomFlash/$(1),$(1),rx15,RX15, 0xbb0000)
-Image/Build/Profile/R0=$(call BuildFirmware/CustomFlash/$(1),$(1),r0,R0, 0xbb0000)
+Image/Build/Profile/R0=$(call BuildFirmware/CustomFlash/$(1),$(1),irz_r0,R0, 0xbb0000)
 
 ifeq ($(SUBTARGET),mt7620)
 define Image/Build/Profile/Default
