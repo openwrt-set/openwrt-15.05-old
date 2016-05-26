@@ -9,7 +9,13 @@ define Profile/MT7620a
 	NAME:=MT7620a EVB
 endef
 
+define Profile/MT7620aPINMODULE
+	NAME:=MT7620a PINMODULE
+endef
+
 define Profile/Default/Description
 	Default package set compatible with MT7620a eval board
 endef
+
 $(eval $(call Profile,MT7620a))
+$(eval $(call Profile,MT7620aPINMODULE))

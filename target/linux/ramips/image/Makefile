@@ -944,6 +944,9 @@ Image/Build/Profile/ArcherC20i=$(call BuildFirmware/Tplink/$(1),$(1),ArcherC20i,
 microwrt_mtd_size=16515072
 Image/Build/Profile/MicroWRT=$(call BuildFirmware/CustomFlash/$(1),$(1),microwrt,MicroWRT,$(microwrt_mtd_size))
 
+Image/Build/Profile/MT7620aPINMODULE=$(call BuildFirmware/Default16M/$(1),$(1),mt7620apinmodule,MT7620aPINMODULE)
+Image/Build/Profile/RX15=$(call BuildFirmware/CustomFlash/$(1),$(1),rx15,RX15, 0xbb0000)
+Image/Build/Profile/R0=$(call BuildFirmware/CustomFlash/$(1),$(1),r0,R0, 0xbb0000)
 
 ifeq ($(SUBTARGET),mt7620)
 define Image/Build/Profile/Default
@@ -976,6 +979,9 @@ define Image/Build/Profile/Default
 	$(call Image/Build/Profile/ZBT-WA05,$(1))
 	$(call Image/Build/Profile/ArcherC20i,$(1))
 	$(call Image/Build/Profile/MicroWRT,$(1))
+	$(call Image/Build/Profile/MT7620aPINMODULE,$(1))
+	$(call Image/Build/Profile/RX15,$(1))
+	$(call Image/Build/Profile/R0,$(1))
 endef
 endif
 

@@ -269,7 +269,8 @@ ramips_setup_interfaces()
 		ucidef_add_switch_vlan "switch0" "1" "1 2 3 4 5t"
 		ucidef_add_switch_vlan "switch0" "2" "0 5t"
 		;;
-	irz_ra01)
+	irz_ra01|\
+	irz_rx15)
 		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
 		## switch
 		ucidef_add_switch "switch0" "1" "1"
@@ -282,6 +283,11 @@ ramips_setup_interfaces()
 		ucidef_add_switch "switch0" "1" "1"
 		ucidef_add_switch_vlan "switch0" "1" "1 2 3 4 5 6t"
 		ucidef_add_switch_vlan "switch0" "2" "0 6t"
+		;;
+	irz_r0)
+		ucidef_set_interface_lan "eth0.1"
+		ucidef_add_switch "switch0" "1" "1"
+		ucidef_add_switch_vlan "switch0" "1" "0 6t"
 		;;
 	*)
 		RT3X5X=`cat /proc/cpuinfo | egrep "(RT3.5|RT5350)"`
@@ -403,7 +409,10 @@ ramips_setup_macs()
 	irz_ra02)
 		lan_mac=$(mtd_get_mac_binary factory 0x28)
 		wan_mac=$(mtd_get_mac_binary factory 0x2E)
-	;;
+		;;
+	irz_r0)
+		lan_mac=$(mtd_get_mac_binary factory 0x28)
+		;;
 	*)
 		lan_mac=$(cat /sys/class/net/eth0/address)
 		wan_mac=$(macaddr_add "$lan_mac" 1)
