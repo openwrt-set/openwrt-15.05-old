@@ -42,12 +42,24 @@
 				};
 			};
 		};
+	    	gpio@600 {
+			status = "okay";
+		};
+		gpio@638 {
+			status = "okay";
+		};
+		gpio@660 {
+			status = "okay";
+		};
+		gpio@688 {
+			status = "okay";
+		};
 	};
 
 	pinctrl {
 		state_default: pinctrl0 {
 			gpio {
-				ralink,group = "rgmii1", "rgmii2", "uartf";
+				ralink,group = "rgmii1", "rgmii2", "uartf", "pcie";
 				ralink,function = "gpio";
 			};
 		};
@@ -86,38 +98,53 @@
 		status = "disabled";
 	};
 
+
+
 	gpio {
 		compatible = "gpio-export";
 		GSM_POWER {
-		    gpios = <&gpio1 12 1>;
-		    gpio-export,name  = "GSM_POWER";
-		    gpio-export,direction_may_change;
-		    gpio-export,output = <0>;
-		    
+		    gpios = <&gpio1 3 1>;
+		    gpio-export,name  = "gsm:power";
+		    gpio-export,output = <1>;
 		};
-		
+
+		GSM_ENABLE {
+		    gpios = <&gpio1 12 1>;
+		    gpio-export,name  = "gsm:enable";
+		    gpio-export,output = <1>;
+		};
+
+		GSM_RESET {
+		    gpios = <&gpio1 1 0>;
+		    gpio-export,name  = "gsm:reset";
+		    gpio-export,output = <0>;
+		};
+
+		USB_DET {
+		    gpios = <&gpio0 0 0>;
+		    gpio-export,name  = "gsm:detect";
+		    gpio-export,output = <0>;
+		};
 	};
 
-	gpio-keys-polled {
+	gpio-keys {
 		compatible = "gpio-keys";
 		#address-cells = <1>;
 		#size-cells = <0>;
 		poll-interval = <20>;
 		reset {
 			label = "reset";
-			gpios = <&gpio0 1 1>;
+			gpios = <&gpio1 0 1>;
 			linux,code = <0x100>;
 		};
 	};
 
 	gpio-leds {
 		compatible = "gpio-leds";
-/*
 		power {
 			label = "power";
-			gpios = <&gpio1 12 0>;
+			gpios = <&gpio1 2 1>;
 		};
-*/
 		ppp_green {
 			label = "ppp:green";
 			gpios = <&gpio0 12 0>;
@@ -131,7 +158,7 @@
 			gpios = <&gpio0 14 0>;
 		};
 		csq_red {
-			label = "csq_red";
+			label = "csq:red";
 			gpios = <&gpio0 13 0>;
 		};
 	};
