@@ -1,6 +1,6 @@
 --- a/drivers/usb/serial/option.c
 +++ b/drivers/usb/serial/option.c
-@@ -371,6 +371,9 @@ static void option_instat_callback(struc
+@@ -370,6 +370,9 @@ static void option_instat_callback(struc
  /* SpeedUp SU9800 usb 3g modem */
  #define SPEEDUP_PRODUCT_SU9800			0x9800
  
@@ -10,8 +10,8 @@
  /* Haier products */
  #define HAIER_VENDOR_ID				0x201e
  #define HAIER_PRODUCT_CE81B			0x10f8
-@@ -1693,6 +1696,7 @@ static const struct usb_device_id option
-   	},
+@@ -1684,6 +1687,7 @@ static const struct usb_device_id option
+ 	},
  	{ USB_DEVICE_INTERFACE_CLASS(LONGCHEER_VENDOR_ID, SPEEDUP_PRODUCT_SU9800, 0xff) },
  	{ USB_DEVICE(LONGCHEER_VENDOR_ID, ZOOM_PRODUCT_4597) },
 +	{ USB_DEVICE(LONGCHEER_VENDOR_ID, LONGUNG_8301) },

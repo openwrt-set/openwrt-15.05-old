@@ -6,7 +6,7 @@ Date:   Tue Mar 3 16:51:47 2015 +0300
 
 --- a/drivers/usb/serial/option.c
 +++ b/drivers/usb/serial/option.c
-@@ -2030,7 +2030,7 @@ static void option_instat_callback(struc
+@@ -1981,7 +1981,7 @@ static void option_instat_callback(struc
  			dev_dbg(dev, "%s: type %x req %x\n", __func__,
  				req_pkt->bRequestType, req_pkt->bRequest);
  		}
@@ -14,4 +14,4 @@ Date:   Tue Mar 3 16:51:47 2015 +0300
 +	} else if (status == -ENOENT || status == -ESHUTDOWN || status == -71) {
  		dev_dbg(dev, "%s: urb stopped: %d\n", __func__, status);
  	} else
- 		dev_err(dev, "%s: error %d\n", __func__, status);
+ 		dev_dbg(dev, "%s: error %d\n", __func__, status);

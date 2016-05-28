@@ -62,7 +62,7 @@ Cc: linux-gpio@vger.kernel.org
  	depends on PLAT_SPEAR
 --- a/drivers/gpio/Makefile
 +++ b/drivers/gpio/Makefile
-@@ -76,6 +76,7 @@ obj-$(CONFIG_GPIO_PCF857X)	+= gpio-pcf85
+@@ -77,6 +77,7 @@ obj-$(CONFIG_GPIO_PCF857X)	+= gpio-pcf85
  obj-$(CONFIG_GPIO_PCH)		+= gpio-pch.o
  obj-$(CONFIG_GPIO_PL061)	+= gpio-pl061.o
  obj-$(CONFIG_GPIO_PXA)		+= gpio-pxa.o

@@ -6,7 +6,7 @@ Date:   Tue Mar 3 16:48:10 2015 +0300
 
 --- a/drivers/usb/serial/option.c
 +++ b/drivers/usb/serial/option.c
-@@ -101,6 +101,10 @@ static void option_instat_callback(struc
+@@ -100,6 +100,10 @@ static void option_instat_callback(struc
  #define YISO_VENDOR_ID				0x0EAB
  #define YISO_PRODUCT_U893			0xC893
  
@@ -17,7 +17,7 @@ Date:   Tue Mar 3 16:48:10 2015 +0300
  /*
   * NOVATEL WIRELESS PRODUCTS
   *
-@@ -1840,6 +1844,7 @@ static const struct usb_device_id option
+@@ -1831,6 +1835,7 @@ static const struct usb_device_id option
  	{ USB_DEVICE_INTERFACE_CLASS(0x2020, 0x4000, 0xff) },                /* OLICARD300 - MT6225 */
  	{ USB_DEVICE(INOVIA_VENDOR_ID, INOVIA_SEW858) },
  	{ USB_DEVICE(VIATELECOM_VENDOR_ID, VIATELECOM_PRODUCT_CDS7) },
