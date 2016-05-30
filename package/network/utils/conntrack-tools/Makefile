@@ -56,7 +56,7 @@ TARGET_CFLAGS += -D_GNU_SOURCE=1
 define Package/conntrack-tools/install
 	$(INSTALL_DIR) $(1)/etc/conntrackd
 	$(INSTALL_CONF) \
-		$(PKG_BUILD_DIR)/doc/stats/conntrackd.conf \
+		./files/conntrackd.conf \
 		$(1)/etc/conntrackd/
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) \
