@@ -1,0 +1,10 @@
+--- a/tools/env/fw_env.c	2016-05-31 11:49:34.755827335 +0300
++++ b/tools/env/fw_env.c	2016-05-31 11:49:46.065826828 +0300
+@@ -17,6 +17,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <stddef.h>
++#include <stdint.h>
+ #include <string.h>
+ #include <sys/types.h>
+ #include <sys/ioctl.h>
