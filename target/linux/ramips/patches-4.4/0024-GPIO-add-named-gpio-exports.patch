@@ -146,7 +146,7 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
  
  #if IS_ENABLED(CONFIG_GPIOLIB) && IS_ENABLED(CONFIG_GPIO_SYSFS)
  
-+int __gpiod_export(struct gpio_desc *desc, bool direction_may_change, const char *name);
++int _gpiod_export(struct gpio_desc *desc, bool direction_may_change, const char *name);
  int gpiod_export(struct gpio_desc *desc, bool direction_may_change);
  int gpiod_export_link(struct device *dev, const char *name,
  		      struct gpio_desc *desc);
@@ -154,7 +154,7 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
  
  #else  /* CONFIG_GPIOLIB && CONFIG_GPIO_SYSFS */
  
-+static inline int __gpiod_export(struct gpio_desc *desc,
++static inline int _gpiod_export(struct gpio_desc *desc,
 +			       bool direction_may_change,
 +			       const char *name)
 +{

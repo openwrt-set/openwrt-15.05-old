@@ -6,7 +6,7 @@ Date:   Fri Mar 6 15:39:22 2015 +0300
 
 --- a/drivers/usb/serial/option.c
 +++ b/drivers/usb/serial/option.c
-@@ -290,6 +290,7 @@ static void option_instat_callback(struc
+@@ -292,6 +292,7 @@ static void option_instat_callback(struc
  #define ZTE_PRODUCT_MC2718			0xffe8
  #define ZTE_PRODUCT_AD3812			0xffeb
  #define ZTE_PRODUCT_MC2716			0xffed
@@ -14,7 +14,7 @@ Date:   Fri Mar 6 15:39:22 2015 +0300
  
  #define BENQ_VENDOR_ID				0x04a5
  #define BENQ_PRODUCT_H10			0x4068
-@@ -1645,6 +1646,7 @@ static const struct usb_device_id option
+@@ -1657,6 +1658,7 @@ static const struct usb_device_id option
  	{ USB_VENDOR_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0xff, 0x02, 0x01) },
  	{ USB_VENDOR_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0xff, 0x02, 0x05) },
  	{ USB_VENDOR_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0xff, 0x86, 0x10) },
