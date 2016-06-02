@@ -15,7 +15,7 @@ PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_MD5SUM:=d8eee8cba0edb28974cc1f8532e3bd18
 PKG_SOURCE_URL:=http://mirror2.openwrt.org/sources
-PKG_MAINTAINER:=John Crispin <john@phrozen.org>
+PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 
 PKG_USE_MIPS16:=0
 PKG_CHECK_FORMAT_SECURITY:=0
@@ -62,7 +62,7 @@ ifneq ($(CONFIG_VOICE_CPE_VMMC_MPS_HISTORY_SIZE),128)
   CONFIGURE_ARGS += --enable-history-buf=$(CONFIG_VOICE_CPE_VMMC_MPS_HISTORY_SIZE)
 endif
 
-#defaults
+#defaults 
 FW_URL:=http://downloads.openwrt.org/sources/
 FW_TARGET:=ifx_firmware.bin
 FW_FILE:=fw_voip_ifx.tar.gz

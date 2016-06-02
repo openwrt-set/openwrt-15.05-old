@@ -148,24 +148,11 @@ endef
 $(eval $(call KernelPackage,gw16083))
 
 
-define KernelPackage/phylib-broadcom
-   SUBMENU:=$(NETWORK_DEVICES_MENU)
-   TITLE:=Broadcom Ethernet PHY library
-   KCONFIG:=CONFIG_BCM_NET_PHYLIB
-   HIDDEN:=1
-   DEPENDS:=+kmod-libphy
-   FILES:=$(LINUX_DIR)/drivers/net/phy/bcm-phy-lib.ko
-   AUTOLOAD:=$(call AutoLoad,17,bcm-phy-lib)
-endef
-
-$(eval $(call KernelPackage,phylib-broadcom))
-
-
 define KernelPackage/phy-broadcom
    SUBMENU:=$(NETWORK_DEVICES_MENU)
    TITLE:=Broadcom Ethernet PHY driver
    KCONFIG:=CONFIG_BROADCOM_PHY
-   DEPENDS:=+kmod-libphy +kmod-phylib-broadcom
+   DEPENDS:=+kmod-libphy
    FILES:=$(LINUX_DIR)/drivers/net/phy/broadcom.ko
    AUTOLOAD:=$(call AutoLoad,18,broadcom)
 endef
@@ -193,20 +180,6 @@ endef
 
 $(eval $(call KernelPackage,swconfig))
 
-define KernelPackage/switch-mvsw61xx
-  SUBMENU:=$(NETWORK_DEVICES_MENU)
-  TITLE:=Marvell 88E61xx switch support
-  DEPENDS:=+kmod-swconfig
-  KCONFIG:=CONFIG_MVSW61XX_PHY
-  FILES:=$(LINUX_DIR)/drivers/net/phy/mvsw61xx.ko
-  AUTOLOAD:=$(call AutoLoad,42,mvsw61xx)
-endef
-
-define KernelPackage/switch-mvsw61xx/description
- Marvell 88E61xx switch support
-endef
-
-$(eval $(call KernelPackage,switch-mvsw61xx))
 
 define KernelPackage/switch-ip17xx
   SUBMENU:=$(NETWORK_DEVICES_MENU)
@@ -464,9 +437,9 @@ endef
 
 define KernelPackage/e100/install
 	$(INSTALL_DIR) $(1)/lib/firmware/e100
-	$(INSTALL_DATA) $(LINUX_DIR)/firmware/e100/d101m_ucode.bin $(1)/lib/firmware/e100/
-	$(INSTALL_DATA) $(LINUX_DIR)/firmware/e100/d101s_ucode.bin $(1)/lib/firmware/e100/
-	$(INSTALL_DATA) $(LINUX_DIR)/firmware/e100/d102e_ucode.bin $(1)/lib/firmware/e100/
+	$(foreach file,d101m_ucode.bin d101s_ucode.bin d102e_ucode.bin, \
+		$(TARGET_CROSS)objcopy -Iihex -Obinary $(LINUX_DIR)/firmware/e100/$(file).ihex $(1)/lib/firmware/e100/$(file); \
+	)
 endef
 
 $(eval $(call KernelPackage,e100))
@@ -870,3 +843,18 @@ define KernelPackage/spi-ks8995/description
 endef
 
 $(eval $(call KernelPackage,spi-ks8995))
+
+define KernelPackage/switch-mv88e61xx
+  SUBMENU:=$(NETWORK_DEVICES_MENU)
+  TITLE:=Marvell 88E6172/6176 switch support
+  DEPENDS:=+kmod-swconfig
+  KCONFIG:=CONFIG_MVSW61XX_PHY
+  FILES:=$(LINUX_DIR)/drivers/net/phy/mvsw61xx.ko
+  AUTOLOAD:=$(call AutoLoad,44,mvsw61xx)
+endef
+
+define KernelPackage/switch-mv88e61xx/description
+ Kernel module for Marvell 88E8172, 88E6176 switches
+endef
+
+$(eval $(call KernelPackage,switch-mv88e61xx))

@@ -778,6 +778,7 @@ void ifxusb_vbus_free(ifxusb_core_if_t *_core_if)
 			//					     | IRQF_TRIGGER_HIGH
 			//					     | IRQF_TRIGGER_LOW
 			//					     | IRQF_TRIGGER_PROBE
+								     | IRQF_DISABLED
 			//					     | IRQF_SAMPLE_RANDOM
 			//					     | IRQF_SHARED
 								     | IRQF_PROBE_SHARED
@@ -805,6 +806,7 @@ void ifxusb_vbus_free(ifxusb_core_if_t *_core_if)
 			//					     | IRQF_TRIGGER_HIGH
 			//					     | IRQF_TRIGGER_LOW
 			//					     | IRQF_TRIGGER_PROBE
+								     | IRQF_DISABLED
 			//					     | IRQF_SAMPLE_RANDOM
 			//					     | IRQF_SHARED
 								     | IRQF_PROBE_SHARED
@@ -1007,6 +1009,7 @@ void ifxusb_vbus_free(ifxusb_core_if_t *_core_if)
 		//					  | IRQF_TRIGGER_HIGH
 		//					  | IRQF_TRIGGER_LOW
 		//					  | IRQF_TRIGGER_PROBE
+							  | IRQF_DISABLED
 		//					  | IRQF_SAMPLE_RANDOM
 		//					  | IRQF_SHARED
 							  | IRQF_PROBE_SHARED
@@ -1171,6 +1174,7 @@ void ifxusb_vbus_free(ifxusb_core_if_t *_core_if)
 	//					  | IRQF_TRIGGER_HIGH
 	//					  | IRQF_TRIGGER_LOW
 	//					  | IRQF_TRIGGER_PROBE
+						  | IRQF_DISABLED
 	//					  | IRQF_SAMPLE_RANDOM
 	//					  | IRQF_SHARED
 	//					  | IRQF_PROBE_SHARED

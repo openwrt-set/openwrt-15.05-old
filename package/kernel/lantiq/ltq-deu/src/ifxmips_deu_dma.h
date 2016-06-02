@@ -35,7 +35,7 @@
 #include <linux/module.h>
 #include <linux/mm.h>
 #include <linux/crypto.h>
-#include <linux/scatterlist.h>
+#include <asm/scatterlist.h>
 #include <asm/byteorder.h>
 #include <linux/skbuff.h>
 #include <linux/netdevice.h>
