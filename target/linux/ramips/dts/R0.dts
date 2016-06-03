@@ -126,19 +126,17 @@
 		    gpio-export,output = <0>;
 		};
 	};
-
-	gpio-keys {
-		compatible = "gpio-keys";
+	gpio-keys-polled {
+		compatible = "gpio-keys-polled";
 		#address-cells = <1>;
 		#size-cells = <0>;
 		poll-interval = <20>;
 		reset {
 			label = "reset";
-			gpios = <&gpio1 0 1>;
-			linux,code = <0x100>;
+			gpios = <&gpio1 0 0>;
+			linux,code = <0x198>;
 		};
 	};
-
 	gpio-leds {
 		compatible = "gpio-leds";
 		power {
