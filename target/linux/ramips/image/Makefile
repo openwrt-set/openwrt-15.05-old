@@ -705,7 +705,6 @@ Image/Build/Profile/R1=$(call BuildFirmware/R1/$(1),$(1),irz_ra01,R1)
 
 define BuildFirmware/R2/squashfs
 	$(call BuildFirmware/CustomFlash/$(1),$(1),$(2),$(3), 0xbb0000)
-	$(call Image/Build/SysupgradeTAR,$(2),$(1),$(KDIR)/vmlinux-$(2).uImage)
 endef
 
 BuildFirmware/R2/initramfs=$(call BuildFirmware/OF/initramfs,$(1),$(2),$(3))
