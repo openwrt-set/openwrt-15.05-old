@@ -5,12 +5,6 @@
 # See /LICENSE for more information.
 #
 
-define Profile/RX15
-	NAME:=RX15 board
-endef
-
-$(eval $(call Profile,RX15))
-
 define Profile/R0
 	NAME:=R0 board
 endef

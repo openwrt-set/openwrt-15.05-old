@@ -269,8 +269,7 @@ ramips_setup_interfaces()
 		ucidef_add_switch_vlan "switch0" "1" "1 2 3 4 5t"
 		ucidef_add_switch_vlan "switch0" "2" "0 5t"
 		;;
-	irz_ra01|\
-	irz_rx15)
+	irz_ra01)
 		ucidef_set_interfaces_lan_wan "eth0.1" "eth0.2"
 		## switch
 		ucidef_add_switch "switch0" "1" "1"
@@ -284,7 +283,7 @@ ramips_setup_interfaces()
 		ucidef_add_switch_vlan "switch0" "1" "1 2 3 4 5 6t"
 		ucidef_add_switch_vlan "switch0" "2" "0 6t"
 		;;
-	irz_r0)
+	irz_mt00)
 		ucidef_set_interface_lan "eth0.1"
 		ucidef_add_switch "switch0" "1" "1"
 		ucidef_add_switch_vlan "switch0" "1" "0 6t"
@@ -406,11 +405,12 @@ ramips_setup_macs()
 		wan_mac=$(mtd_get_mac_binary factory 4)
 		lan_mac=$(mtd_get_mac_binary factory 46)
 		;;
-	irz_ra02)
+	irz_ra01 |\
+	irz_ra02 )
 		lan_mac=$(mtd_get_mac_binary factory 0x28)
 		wan_mac=$(mtd_get_mac_binary factory 0x2E)
 		;;
-	irz_r0)
+	irz_mt00)
 		lan_mac=$(mtd_get_mac_binary factory 0x28)
 		;;
 	*)

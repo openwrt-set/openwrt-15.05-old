@@ -442,11 +442,8 @@ ramips_board_detect() {
 	*"R2 router board")
 		name="irz_ra02"
 		;;
-	*"RX15 board")
-		name="irz_rx15"
-		;;
 	*"R0 board")
-		name="irz_r0"
+		name="irz_mt00"
 		;;
 	*)
 		name="generic"

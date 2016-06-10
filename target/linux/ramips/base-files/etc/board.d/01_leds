@@ -276,7 +276,7 @@ case $board in
 	irz_ra02)
 		set_wifi_led "rt2800pci-phy0::radio"
 		;;
-	irz_r0)
+	irz_mt00)
 		set_wifi_led "rt2800pci-phy0::radio"
 		;;
 esac
