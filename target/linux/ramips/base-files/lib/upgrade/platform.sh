@@ -177,17 +177,51 @@ platform_check_image() {
 		}
 		return 0
 		;;
+	irz_ra01)
+		local control_length=`(tar xf $1 sysupgrade-$board/CONTROL -O | wc -c) 2> /dev/null`
+		local rootfs_magic=`(tar xf $1 sysupgrade-$board/rootfs -O | dd bs=4 count=1 | hexdump -v -n 4 -e '1/1 "%02x"') 2> /dev/null`
+
+		[ "$control_length" = 0 -a "$rootfs_magic" != "68737173" ] && {
+			echo "Invalid sysupgrade file."
+			return 1
+		}
+
+		return 0
+		;;
 	esac
 
 	echo "Sysupgrade is not yet supported on $board."
 	return 1
 }
 
+do_r1_upgrade() {
+# extract tar
+	local tar_file="$1"
+	local board_name="$(cat /tmp/sysinfo/board_name)"
+	local kernel_mtd="$(find_mtd_index kernel)"
+	local rootfs_mtd="$(find_mtd_index rootfs)"
+
+	local kernel_length=`(tar xf $tar_file sysupgrade-$board_name/kernel -O | wc -c) 2> /dev/null`
+	local rootfs_length=`(tar xf $tar_file sysupgrade-$board_name/root -O | wc -c) 2> /dev/null`
+
+	# write kernel if exist
+	[ "kernel_length" = 0 -o -z "$kernel_mtd" ] || {
+		tar xf $tar_file sysupgrade-$board_name/kernel -O | mtd write - kernel
+	}
+
+	# write rootfs if exist
+	[ "rootfs_length" = 0 -o -z "$rootfs_mtd" ] || {
+		tar xf $tar_file sysupgrade-$board_name/root -O | mtd write - rootfs
+	}
+}
 
 platform_do_upgrade() {
 	local board=$(ramips_board_name)
 
 	case "$board" in
+	irz_ra01)
+		do_r1_upgrade "$ARGV"
+		;;
 	*)
 		default_do_upgrade "$ARGV"
 		;;
