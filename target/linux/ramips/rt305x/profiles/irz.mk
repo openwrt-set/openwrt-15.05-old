@@ -8,7 +8,7 @@
 
 define Profile/R1
 	NAME:=iRZ r1 router board
-	PACKAGES:=kmod-usb-core kmod-usb-ohci kmod-usb2 swconfig kmod-i2c-core
+	PACKAGES:=kmod-usb-core kmod-usb-ohci kmod-usb2 swconfig
 endef
 
 define Profile/R1/Description
@@ -19,7 +19,7 @@ $(eval $(call Profile,R1))
 
 define Profile/R2
 	NAME:=iRZ r2 router board
-	PACKAGES:=kmod-usb-core kmod-usb-ohci kmod-usb2 swconfig kmod-i2c-core
+	PACKAGES:=kmod-usb-core kmod-usb-ohci kmod-usb2 swconfig
 endef
 
 define Profile/R2/Description
@@ -30,7 +30,7 @@ $(eval $(call Profile,R2))
 
 define Profile/irz
 	NAME:=iRZ ramips 5350 routers
-	PACKAGES:=kmod-usb-core kmod-usb-ohci kmod-usb2 swconfig kmod-i2c-core
+	PACKAGES:=kmod-usb-core kmod-usb-ohci kmod-usb2 swconfig
 endef
 
 define Profile/irz/Description
