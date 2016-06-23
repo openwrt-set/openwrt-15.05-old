@@ -3,7 +3,7 @@
 /include/ "mt7620a.dtsi"
 
 / {
-	compatible = "ralink,irz_r0", "ralink,mt7620a-soc";
+	compatible = "ralink,irz_mt00", "ralink,mt7620a-soc";
 	model = "R0 board";
 
 	palmbus@10000000 {
@@ -98,8 +98,6 @@
 		status = "disabled";
 	};
 
-
-
 	gpio {
 		compatible = "gpio-export";
 		GSM_POWER {
@@ -168,7 +166,7 @@
 		status = "okay";
 	};
 	wmac@10180000 {
-		status = "disabled";
+		status = "okay";
 		ralink,mtd-eeprom = <&factory 0>;
 	};
 };
