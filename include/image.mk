@@ -159,13 +159,24 @@ endef
 # $(1): board name
 # $(2): rootfs type
 # $(3): kernel image
+define Image/Build/SysupgradeLegacy
+	mkdir -p "$(KDIR_TMP)/sysupgrade-legacy-$(1)/"
+	rm -rf "$(KDIR_TMP)/sysupgrade-legacy-$(1)/*"
+	echo "BOARD=$(1)" > "$(KDIR_TMP)/sysupgrade-legacy-$(1)/CONTROL"
+	echo "LEGACY=y" >> "$(KDIR_TMP)/sysupgrade-legacy-$(1)/CONTROL"
+	dd if=$(BIN_DIR)/$(IMG_PREFIX)-$(1)-$(2)-sysupgrade.bin of="$(KDIR_TMP)/sysupgrade-legacy-$(1)/kernel" bs=1M count=1
+	dd if=$(BIN_DIR)/$(IMG_PREFIX)-$(1)-$(2)-sysupgrade.bin of="$(KDIR_TMP)/sysupgrade-legacy-$(1)/root" bs=1M skip=1
+	[ ! -d "$(TOPDIR)/env/preupgrade.d" ] || $(CP) "$(TOPDIR)/env/preupgrade.d/" "$(KDIR_TMP)/sysupgrade-legacy-$(1)/"
+	(cd "$(KDIR_TMP)"; $(TAR) cvf \
+		"$(BIN_DIR)/$(IMG_PREFIX)-$(1)-$(2)-sysupgrade-legacy.tar" --transform="s/sysupgrade-legacy/sysupgrade/" sysupgrade-legacy-$(1))
+endef
+
 define Image/Build/SysupgradeTAR
 	mkdir -p "$(KDIR_TMP)/sysupgrade-$(1)/"
+	rm -rf "$(KDIR_TMP)/sysupgrade-$(1)/*"
 	echo "BOARD=$(1)" > "$(KDIR_TMP)/sysupgrade-$(1)/CONTROL"
-	dd if=$(BIN_DIR)/$(IMG_PREFIX)-$(1)-$(2)-sysupgrade.bin of="$(KDIR_TMP)/sysupgrade-$(1)/kernel" bs=1M count=1
-	dd if=$(BIN_DIR)/$(IMG_PREFIX)-$(1)-$(2)-sysupgrade.bin of="$(KDIR_TMP)/sysupgrade-$(1)/root" bs=1M skip=1
-#	[ -z "$(2)" ] || $(CP) "$(KDIR)/root.$(2)" "$(KDIR_TMP)/sysupgrade-$(1)/root"
-#	[ -z "$(3)" ] || $(CP) "$(3)" "$(KDIR_TMP)/sysupgrade-$(1)/kernel"
+	echo "LEGACY=n" >> "$(KDIR_TMP)/sysupgrade-$(1)/CONTROL"
+	$(CP) "$(BIN_DIR)/$(IMG_PREFIX)-$(1)-$(2)-sysupgrade.bin" $(KDIR_TMP)/sysupgrade-$(1)/firmware
 	[ ! -d "$(TOPDIR)/env/preupgrade.d" ] || $(CP) "$(TOPDIR)/env/preupgrade.d/" "$(KDIR_TMP)/sysupgrade-$(1)/"
 	(cd "$(KDIR_TMP)"; $(TAR) cvf \
 		"$(BIN_DIR)/$(IMG_PREFIX)-$(1)-$(2)-sysupgrade.tar" sysupgrade-$(1))

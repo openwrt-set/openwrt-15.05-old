@@ -129,10 +129,7 @@ platform_check_image() {
 	y1s |\
 	zbt-wa05 |\
 	zbt-wg2626 |\
-	zte-q7 |\
-	irz_ra02 |\
-	irz_mt00 |\
-	irz_ra01 )
+	zte-q7 )
 		[ "$magic" != "27051956" ] && {
 			echo "Invalid image type."
 			return 1
@@ -177,6 +174,24 @@ platform_check_image() {
 		}
 		return 0
 		;;
+	irz_ra02 |\
+	irz_mt00 |\
+	irz_ra01 )
+		[ "$magic" != "27051956" -a "$(tar xf $1 sysupgrade-$board/CONTROL -O | wc -c 2> /dev/null)" = "0" ] && {
+			echo "Invalid image type."
+			return 1
+		}
+		
+		if [ "$(tar xf $1 sysupgrade-$board/CONTROL -O | wc -c 2> /dev/null)" != "0" ]; then
+		    
+		    if [ "$(tar xf $1 sysupgrade-$board/firmware -O | wc -c 2> /dev/null)" = "0" ]; then
+			echo "Please, use non-legacy upgrade image"
+			return 1
+		    fi
+		fi
+		
+		return 0
+		;;
 	esac
 
 	echo "Sysupgrade is not yet supported on $board."
@@ -187,10 +202,35 @@ platform_do_upgrade() {
 	local board=$(ramips_board_name)
 
 	case "$board" in
+	irz_ra02 |\
+	irz_mt00 |\
+	irz_ra01 )
+		local magic="$(get_magic_long "$1")"
+		if [ "$magic" = "27051956" ]; then
+		    default_do_upgrade "$ARGV"
+		elif [ "$(tar xf $1 sysupgrade-$board/CONTROL -O | wc -c 2> /dev/null)" != "0" ]; then
+		    local fw_len="$(tar xf $1 sysupgrade-$board/firmware -O | wc -c 2> /dev/null)"
+		    if [ "$fw_len" != "0" ]; then
+			irz_do_upgrade "$ARGV"
+		    fi
+		fi
+		;;
 	*)
 		default_do_upgrade "$ARGV"
 		;;
 	esac
+}
+
+irz_do_upgrade() {
+    local tar_file="$1"
+    local board_name="$(cat /tmp/sysinfo/board_name)"
+    local firmware_mtd="$(find_mtd_index firmware)"
+
+    local firmware_length=`$(tar xf $tar_file sysupgrade-$board_name/firmware -O | wc -c 2> /dev/null)`
+    # write kernel if exist
+    [ "$firmware_length" = 0 -o -z "$firmware_mtd" -o "$firmware_length" -gt "$(cat /sys/class/mtd/mtd${firmware_mtd}/size)" ] || {
+	tar xf $tar_file sysupgrade-$board_name/firmware -O | mtd write - firmware
+    }
 }
 
 disable_watchdog() {

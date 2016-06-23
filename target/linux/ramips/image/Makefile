@@ -101,6 +101,10 @@ define CompressLzma
 	$(STAGING_DIR_HOST)/bin/lzma e $(1) -lc1 -lp2 -pb2 $(2)
 endef
 
+define CompressGzip
+	$(STAGING_DIR_HOST)/bin/gzip --stdout $(1) > $(2)
+endef
+
 define MkImageSysupgrade/squashfs
 	$(eval output_name=$(IMG_PREFIX)-$(2)-$(1)-$(if $(4),$(4),sysupgrade).bin)
 	cat $(KDIR)/vmlinux-$(2).uImage $(KDIR)/root.$(1) > $(KDIR)/$(output_name)
@@ -139,6 +143,20 @@ define PatchKernelLzmaDtb
 	$(call CompressLzma,$(KDIR)/vmlinux-$(1)$(3),$(KDIR)/vmlinux-$(1)$(3).bin.lzma)
 endef
 
+define PatchKernelDtb
+	cp $(KDIR)/vmlinux$(3) $(KDIR)/vmlinux-$(1)$(3)
+	$(LINUX_DIR)/scripts/dtc/dtc -O dtb -o $(KDIR)/$(2).dtb ../dts/$(2).dts
+	$(STAGING_DIR_HOST)/bin/patch-dtb $(KDIR)/vmlinux-$(1)$(3) $(KDIR)/$(2).dtb
+#	$(call CompressLzma,$(KDIR)/vmlinux-$(1)$(3),$(KDIR)/vmlinux-$(1)$(3).bin.lzma)
+endef
+
+define PatchKernelGzipDtb
+	cp $(KDIR)/vmlinux$(3) $(KDIR)/vmlinux-$(1)$(3)
+	$(LINUX_DIR)/scripts/dtc/dtc -O dtb -o $(KDIR)/$(2).dtb ../dts/$(2).dts
+	$(STAGING_DIR_HOST)/bin/patch-dtb $(KDIR)/vmlinux-$(1)$(3) $(KDIR)/$(2).dtb
+	$(call CompressGzip,$(KDIR)/vmlinux-$(1)$(3),$(KDIR)/vmlinux-$(1)$(3).bin.gzip)
+endef
+
 # $(1), lowercase board name
 # $(2), DTS filename without .dts extension
 # $(3), ih_name field of uImage header
@@ -149,12 +167,29 @@ define MkImageLzmaDtb
 	$(CP) $(KDIR)/vmlinux-$(1)$(4).uImage $(BIN_DIR)/$(IMG_PREFIX)-$(1)-uImage
 endef
 
+define MkImageGzipDtb
+	$(call PatchKernelGzipDtb,$(1),$(2),$(4))
+	$(call MkImage,gzip,$(KDIR)/vmlinux-$(1)$(4).bin.gzip,$(KDIR)/vmlinux-$(1)$(4).uImage,$(3))
+	$(CP) $(KDIR)/vmlinux-$(1)$(4).uImage $(BIN_DIR)/$(IMG_PREFIX)-$(1)-uImage
+endef
+
+define MkImageCleanDtb
+	$(call PatchKernelDtb,$(1),$(2),$(4))
+	$(call MkImage,none,$(KDIR)/vmlinux-$(1)$(4),$(KDIR)/vmlinux-$(1)$(4).uImage,$(3))
+	$(CP) $(KDIR)/vmlinux-$(1)$(4).uImage $(BIN_DIR)/$(IMG_PREFIX)-$(1)-uImage
+endef
+
 # $(1), Rootfs type, e.g. squashfs
 # $(2), lowercase board name
 # $(3), DTS filename without .dts extension
 # $(4), maximum size of sysupgrade image
 # $(5), uImage header's ih_name field
 define BuildFirmware/OF
+	$(call MkImageLzmaDtb,$(2),$(3),$(5))
+	$(call MkImageSysupgrade/$(1),$(1),$(2),$(4),$(6))
+endef
+
+define BuildFirmware/OF_IRZ
 	$(call MkImageLzmaDtb,$(2),$(3),$(5))
 	$(call MkImageSysupgrade/$(1),$(1),$(2),$(4),$(6))
 endef
@@ -174,7 +209,7 @@ endef
 # $(3), DTS filename without .dts extension
 # $(4), ih_name field of uImage header
 define BuildFirmware/OF/initramfs
-	$(call MkImageLzmaDtb,$(2),$(3),$(4),-initramfs)
+	$(call MkImageCleanDtb,$(2),$(3),$(4),-initramfs)
 	$(CP) $(KDIR)/vmlinux-$(2)-initramfs.uImage $(call imgname,$(1),$(2))-uImage.bin
 endef
 
@@ -199,6 +234,8 @@ BuildFirmware/Default8M/squashfs=$(call BuildFirmware/OF,$(1),$(2),$(3),$(ralink
 BuildFirmware/Default8M/initramfs=$(call BuildFirmware/OF/initramfs,$(1),$(2),$(3),$(4))
 BuildFirmware/Tplink/squashfs=$(call BuildFirmware/OF/tplink,$(1),$(2),$(3),$(4))
 BuildFirmware/Tplink/initramfs=$(call BuildFirmware/OF/tplink/initramfs,$(1),$(2),$(3),$(4))
+BuildFirmware/IRZ8M/squashfs=$(call BuildFirmware/OF_IRZ,$(1),$(2),$(3),$(ralink_default_fw_size_8M),$(4))
+BuildFirmware/IRZ8M/initramfs=$(call BuildFirmware/OF_IRZ/initramfs,$(1),$(2),$(3),$(4))
 
 ralink_default_fw_size_16M=16121856
 BuildFirmware/Default16M/squashfs=$(call BuildFirmware/OF,$(1),$(2),$(3),$(ralink_default_fw_size_16M),$(4))
@@ -695,11 +732,12 @@ Image/Build/Profile/X8=$(call BuildFirmware/Poray8M/$(1),$(1),x8,X8)
 Image/Build/Profile/XDXRN502J=$(call BuildFirmware/Default4M/$(1),$(1),xdxrn502j,XDXRN502J)
 
 define BuildFirmware/R1/squashfs
-	$(call BuildFirmware/Default8M/$(1),$(1),$(2),$(3))
+	$(call BuildFirmware/IRZ8M/$(1),$(1),$(2),$(3))
 	$(call Image/Build/SysupgradeTAR,$(2),$(1),$(KDIR)/vmlinux-$(2).uImage)
+	$(call Image/Build/SysupgradeLegacy,$(2),$(1))
 endef
 
-BuildFirmware/R1/initramfs=$(call BuildFirmware/OF/initramfs,$(1),$(2),$(3))
+BuildFirmware/R1/initramfs=$(call BuildFirmware/OFIRZ/initramfs,$(1),$(2),$(3))
 
 Image/Build/Profile/R1=$(call BuildFirmware/R1/$(1),$(1),irz_ra01,R1)
 
@@ -713,7 +751,6 @@ Image/Build/Profile/R2=$(call BuildFirmware/R1/$(1),$(1),irz_ra02,R2)
 ifeq ($(SUBTARGET),rt305x)
 define Image/Build/Profile/irz
 	$(call Image/Build/Profile/R1,$(1))
-	$(call Image/Build/Profile/R2,$(1))
 endef
 endif
 
