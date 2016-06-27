@@ -980,7 +980,12 @@ Image/Build/Profile/ArcherC20i=$(call BuildFirmware/Tplink/$(1),$(1),ArcherC20i,
 microwrt_mtd_size=16515072
 Image/Build/Profile/MicroWRT=$(call BuildFirmware/CustomFlash/$(1),$(1),microwrt,MicroWRT,$(microwrt_mtd_size))
 
-Image/Build/Profile/R0=$(call BuildFirmware/CustomFlash/$(1),$(1),irz_mt00,R0, 0xbb0000)
+define BuildFirmware/R0/squashfs
+	$(call BuildFirmware/CustomFlash/$(1),$(1),irz_mt00,R0, 0xbb0000)
+	$(call Image/Build/SysupgradeTAR,$(2),$(1),$(KDIR)/vmlinux-$(2).uImage)
+endef
+
+Image/Build/Profile/R0=$(call BuildFirmware/R0/$(1),$(1),irz_mt00,R0)
 
 ifeq ($(SUBTARGET),mt7620)
 define Image/Build/Profile/Default
