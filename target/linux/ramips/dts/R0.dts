@@ -73,6 +73,7 @@
 		pinctrl-0 = <&mdio_pins>;
 
 		ralink,port-map = "lwwww";
+		mtd-mac-address = <&factory 0x28>;
 
 		port@4 {
 			status = "okay";
