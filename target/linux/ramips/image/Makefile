@@ -741,16 +741,10 @@ BuildFirmware/R1/initramfs=$(call BuildFirmware/OFIRZ/initramfs,$(1),$(2),$(3))
 
 Image/Build/Profile/R1=$(call BuildFirmware/R1/$(1),$(1),irz_ra01,R1)
 
-define BuildFirmware/R2/squashfs
-	$(call BuildFirmware/CustomFlash/$(1),$(1),$(2),$(3), 0xbb0000)
-endef
-
-BuildFirmware/R2/initramfs=$(call BuildFirmware/OF/initramfs,$(1),$(2),$(3))
-Image/Build/Profile/R2=$(call BuildFirmware/R1/$(1),$(1),irz_ra02,R2)
-
 ifeq ($(SUBTARGET),rt305x)
 define Image/Build/Profile/irz
 	$(call Image/Build/Profile/R1,$(1))
+	$(call Image/Build/Profile/R0,$(1))
 endef
 endif
 
@@ -843,7 +837,6 @@ define Image/Build/Profile/Default
 	$(call Image/Build/Profile/X8,$(1))
 	$(call Image/Build/Profile/XDXRN502J,$(1))
 	$(call Image/Build/Profile/R1,$(1))
-	$(call Image/Build/Profile/R2,$(1))
 endef
 endif
 

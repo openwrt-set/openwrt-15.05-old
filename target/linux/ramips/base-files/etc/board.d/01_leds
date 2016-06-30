@@ -273,9 +273,6 @@ case $board in
 	irz_ra01)
 		set_wifi_led "POWER"
 		;;
-	irz_ra02)
-		set_wifi_led "rt2800pci-phy0::radio"
-		;;
 	irz_mt00)
 		set_wifi_led "rt2800pci-phy0::radio"
 		;;

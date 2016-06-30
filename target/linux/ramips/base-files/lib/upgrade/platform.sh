@@ -174,7 +174,6 @@ platform_check_image() {
 		}
 		return 0
 		;;
-	irz_ra02 |\
 	irz_mt00 |\
 	irz_ra01 )
 		[ "$magic" != "27051956" -a "$(tar xf $1 sysupgrade-$board/CONTROL -O | wc -c 2> /dev/null)" = "0" ] && {
@@ -202,7 +201,6 @@ platform_do_upgrade() {
 	local board=$(ramips_board_name)
 
 	case "$board" in
-	irz_ra02 |\
 	irz_mt00 |\
 	irz_ra01 )
 		local magic="$(get_magic_long "$1")"
