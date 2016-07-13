@@ -59,7 +59,7 @@
 	pinctrl {
 		state_default: pinctrl0 {
 			gpio {
-				ralink,group = "rgmii1", "rgmii2", "uartf", "pcie";
+				ralink,group = "rgmii1", "rgmii2", "uartf", "pcie", "wled";
 				ralink,function = "gpio";
 			};
 		};
@@ -157,6 +157,10 @@
 		csq_red {
 			label = "csq:red";
 			gpios = <&gpio0 13 0>;
+		};
+		wlan {
+			label = "wlan";
+			gpios = <&gpio3 0 0>;
 		};
 	};
 	ehci@101c0000 {
