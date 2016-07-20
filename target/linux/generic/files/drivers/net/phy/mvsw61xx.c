@@ -316,6 +316,7 @@ mvsw61xx_set_port_link(struct switch_dev *dev, int port,
 		reg &= ~(1 << 4);
 		reg &= ~(1 << 6);
 		gcr |= (0x3 << 8);
+		spd = 0xF << 5;
 	} else { // force
 		if( link->speed == SWITCH_PORT_SPEED_10 ) {
 			// set speed 10Mbps
