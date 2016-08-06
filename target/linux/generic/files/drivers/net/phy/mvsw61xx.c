@@ -370,6 +370,230 @@ mvsw61xx_set_port_link(struct switch_dev *dev, int port,
 	return 0;
 }
 
+static int
+mvsw61xx_get_force_link(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	u16 status;
+
+	status = sr16(dev, MV_PORTREG(PHYCTL, val->port_vlan));
+	val->value.i = (status & (1 << 4)) ? 1 : 0;
+
+	return 0;
+}
+
+static int
+mvsw61xx_get_port_status(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	u16 status;
+
+	status = sr16(dev, MV_PORTREG(STATUS, val->port_vlan));
+	val->value.i = status;
+
+	return 0;
+}
+
+static int
+mvsw61xx_set_force_link(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	u16 reg;
+	reg = sr16(dev, MV_PORTREG(PHYCTL, val->port_vlan));
+
+	if( val->value.i ) {
+		reg |= 1 << 4;
+		reg |= 1 << 5;
+	} else {
+		reg &= ~(1 << 4);
+		reg &= ~(1 << 5);
+	}
+
+	sw16(dev, MV_PORTREG(PHYCTL, val->port_vlan), reg);
+	return 0;
+}
+
+
+
+static int
+mvsw61xx_get_port_phydet(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	u16 status;
+
+	status = sr16(dev, MV_PORTREG(STATUS, val->port_vlan));
+	val->value.i = status & (1 << 12) ? 1 : 0;
+
+	return 0;
+}
+
+static int
+mvsw61xx_set_port_phydet(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	u16 reg;
+	reg = sr16(dev, MV_PORTREG(STATUS, val->port_vlan));
+
+	if( val->value.i ) {
+		reg |= 1 << 12;
+	} else {
+		reg &= ~(1 << 12);
+	}
+
+	sw16(dev, MV_PORTREG(STATUS, val->port_vlan), reg);
+	return 0;
+}
+
+
+static int
+mvsw61xx_get_fiber_control(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	u16 reg, page;
+
+	// set 1 page for access to fiber registers
+	mvsw61xx_phy_read16(dev, 0xF, 22, &page);
+	mvsw61xx_phy_write16(dev, 0xF, 22, 1 );
+	
+
+	mvsw61xx_phy_read16(dev, 0xF, 0, &reg);
+
+	val->value.i = reg;
+
+	mvsw61xx_phy_write16(dev, 0xF, 22, page);
+
+	return 0;
+}
+
+static int
+mvsw61xx_set_fiber_control(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	u16 reg, page;
+
+	// set 1 page for access to fiber registers
+	mvsw61xx_phy_read16(dev, 0xF, 22, &page);
+	mvsw61xx_phy_write16(dev, 0xF, 22, 1 );
+	
+
+	mvsw61xx_phy_write16(dev, 0xF, 0, val->value.i);
+
+	mvsw61xx_phy_write16(dev, 0xF, 22, page);
+
+	return 0;
+}
+
+
+static int
+mvsw61xx_get_fiber_power(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	u16 reg, page;
+
+	// set 1 page for access to fiber registers
+	mvsw61xx_phy_read16(dev, 0xF, 22, &page);
+	mvsw61xx_phy_write16(dev, 0xF, 22, 1 );
+	
+
+	mvsw61xx_phy_read16(dev, 0xF, 0, &reg);
+
+	val->value.i = (reg & (1 << 11)) ? 0 : 1;
+
+	mvsw61xx_phy_write16(dev, 0xF, 22, page);
+
+	return 0;
+}
+
+static int
+mvsw61xx_set_fiber_power(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	u16 reg, page;
+
+	// set 1 page for access to fiber registers
+	mvsw61xx_phy_read16(dev, 0xF, 22, &page);
+	mvsw61xx_phy_write16(dev, 0xF, 22, 1 );
+	
+	mvsw61xx_phy_read16(dev, 0xF, 0, &reg);
+	if( val->value.i ) {
+		reg &= ~(1 << 11);
+	} else {
+		reg |= 1 << 11;
+	}
+	mvsw61xx_phy_write16(dev, 0xF, 0, reg);
+
+	mvsw61xx_phy_write16(dev, 0xF, 22, page);
+
+	return 0;
+}
+
+static int
+mvsw61xx_get_fiber_status(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	u16 reg, page;
+
+	// set 1 page for access to fiber registers
+	mvsw61xx_phy_read16(dev, 0xF, 22, &page);
+	mvsw61xx_phy_write16(dev, 0xF, 22, 1 );
+	
+
+	mvsw61xx_phy_read16(dev, 0xF, 1, &reg);
+
+	val->value.i = reg;
+
+	mvsw61xx_phy_write16(dev, 0xF, 22, page);
+
+	return 0;
+}
+
+static int
+mvsw61xx_get_fiber_regs(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	u16  page;
+	u16 reg;
+	int i;
+	struct mvsw61xx_state *state = get_state(dev);
+	size_t len = 0;
+	// set 1 page for access to fiber registers
+	mvsw61xx_phy_read16(dev, 0xF, 22, &page);
+	mvsw61xx_phy_write16(dev, 0xF, 22, 1 );
+	
+	len = snprintf(state->buf, state->buf_size, "\n00   01   02   03   04   05   06   07   08   09   0A   0B   0C   0D   0E   0F   10   11   12   13   14   15   16   17   18   19   1A   1B   1C   1D   1E   1F  \n");
+	
+	for( i=0; i < 32; i++ ){	
+		mvsw61xx_phy_read16(dev, 0xF, i, &reg);
+		len += snprintf( state->buf + len, state->buf_size - len, "%04X ", reg);
+	}
+
+	val->value.s = state->buf;
+	val->len = len;
+
+	mvsw61xx_phy_write16(dev, val->port_vlan, 22, page);
+
+	return 0;
+}
+
+static int
+mvsw61xx_set_fiber_status(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	u16 reg, page;
+
+	// set 1 page for access to fiber registers
+	mvsw61xx_phy_read16(dev, 0xF, 22, &page);
+	mvsw61xx_phy_write16(dev, 0xF, 22, 1);
+	
+
+	mvsw61xx_phy_write16(dev, 0xF, 1, val->value.i);
+
+	mvsw61xx_phy_write16(dev, 0xF, 22, page);
+
+	return 0;
+}
+
+
 static int mvsw61xx_get_vlan_ports(struct switch_dev *dev,
 		struct switch_val *val)
 {
@@ -798,6 +1022,176 @@ static int mvsw61xx_reset(struct switch_dev *dev)
 	return 0;
 }
 
+static int mvsw61xx_get_vtu_base(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	u16 vop, vid, vd1, vd2, vd3, vfid, vsid;
+	u32 ports, ret;
+	size_t len = 0;
+	struct mvsw61xx_state *state = get_state(dev);
+	memset(state->buf, 0, state->buf_size);	
+	
+	mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(VTU_OP),
+				MV_VTUOP_INPROGRESS, 0);
+	
+	sw16(dev, MV_GLOBALREG(VTU_OP), 0);
+	sw16(dev, MV_GLOBALREG(VTU_VID), 0);
+	sw16(dev, MV_GLOBALREG(VTU_DATA1), 0);
+	sw16(dev, MV_GLOBALREG(VTU_DATA2), 0);
+	sw16(dev, MV_GLOBALREG(VTU_DATA3), 0);
+	sw16(dev, MV_GLOBALREG(VTU_FID), 0);
+	sw16(dev, MV_GLOBALREG(VTU_SID), 0);
+
+	sw16(dev, MV_GLOBALREG(VTU_VID),
+				0xFFF);
+	val->len = 0;
+	do {
+		sw16(dev, MV_GLOBALREG(VTU_OP),
+					MV_VTUOP_INPROGRESS | MV_VTUOP_VTU_GET_NEXT);
+		ret = mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(VTU_OP),
+					MV_VTUOP_INPROGRESS, 0);
+		vop = sr16(dev, MV_GLOBALREG(VTU_OP));
+		vid = sr16(dev, MV_GLOBALREG(VTU_VID));
+		vd1 = sr16(dev, MV_GLOBALREG(VTU_DATA1));
+		vd2 = sr16(dev, MV_GLOBALREG(VTU_DATA2));
+		vd3 = sr16(dev, MV_GLOBALREG(VTU_DATA3));
+		vfid = sr16(dev, MV_GLOBALREG(VTU_FID));
+		vsid = sr16(dev, MV_GLOBALREG(VTU_SID));
+		ports = (vd2 << 16) + vd1;
+		printk(KERN_INFO "vid: %d, fid: %d, sid: %d,  dataregs: 0x%x\n"
+				, (vid & 0xFFF), vfid, vsid, ports);
+		if( (vid & MV_VTU_VID_VALID) && (state->buf_size - len > 0)) {
+			len += snprintf(state->buf + len, (state->buf_size - len), 
+				"vid: %d, fid: %d, sid: %d,  dataregs: 0x%X\n"
+				, (vid & 0xFFF), vfid, vsid, ports);
+		}
+	} while( vid & MV_VTU_VID_VALID && ret == 0);
+
+	val->value.s = state->buf;
+	val->len = len;
+	return 0;
+}
+
+static int mvsw61xx_get_stu_base(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	u16 vop, vid, vd1, vd2, vd3, vfid, vsid;
+	u32 ports, ret;
+	size_t len = 0;
+	struct mvsw61xx_state *state = get_state(dev);
+	memset(state->buf, 0, state->buf_size);	
+	mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(VTU_OP),
+				MV_VTUOP_INPROGRESS, 0);
+
+	sw16(dev, MV_GLOBALREG(VTU_OP), 0);
+	sw16(dev, MV_GLOBALREG(VTU_VID), 0);
+	sw16(dev, MV_GLOBALREG(VTU_DATA1), 0);
+	sw16(dev, MV_GLOBALREG(VTU_DATA2), 0);
+	sw16(dev, MV_GLOBALREG(VTU_DATA3), 0);
+	sw16(dev, MV_GLOBALREG(VTU_FID), 0);
+	sw16(dev, MV_GLOBALREG(VTU_SID), 0);
+	sw16(dev, MV_GLOBALREG(VTU_SID),
+				0x3F);
+	val->len = 0;
+	do {
+		sw16(dev, MV_GLOBALREG(VTU_OP),
+					MV_VTUOP_INPROGRESS | MV_VTUOP_STU_GET_NEXT);
+		ret = mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(VTU_OP),
+					MV_VTUOP_INPROGRESS, 0);
+		vop = sr16(dev, MV_GLOBALREG(VTU_OP));
+		vid = sr16(dev, MV_GLOBALREG(VTU_VID));
+		vd1 = sr16(dev, MV_GLOBALREG(VTU_DATA1));
+		vd2 = sr16(dev, MV_GLOBALREG(VTU_DATA2));
+		vd3 = sr16(dev, MV_GLOBALREG(VTU_DATA3));
+		vfid = sr16(dev, MV_GLOBALREG(VTU_FID));
+		vsid = sr16(dev, MV_GLOBALREG(VTU_SID));
+		ports = (vd2 << 16) + vd1;
+		printk(KERN_INFO "sid: %d, dataregs: 0x%x\n"
+				, vsid, ports);
+		if( (vid & MV_VTU_VID_VALID) && (state->buf_size - len > 0)) {
+			len += snprintf(state->buf + len, (state->buf_size - len), 
+				"sid: %d,  dataregs: 0x%X\n"
+				, vsid, ports);
+		}
+	} while( vid & MV_VTU_VID_VALID && ret == 0);
+
+	val->value.s = state->buf;
+	val->len = len;
+	return 0;
+}
+/*
+static int mvsw61xx_get_atu_base(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	u16 vop, vid, vd1, vd2, vd3, vfid, vsid;
+	u32 ports, ret;
+	size_t len = 0;
+	struct mvsw61xx_state *state = get_state(dev);
+	
+	mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(VTU_OP),
+				MV_VTUOP_INPROGRESS, 0);
+
+	sw16(dev, MV_GLOBALREG(VTU_VID),
+				0xFFF);
+	val->len = 0;
+	do {
+		sw16(dev, MV_GLOBALREG(VTU_OP),
+					MV_VTUOP_INPROGRESS | MV_VTUOP_VTU_GET_NEXT);
+		ret = mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(VTU_OP),
+					MV_VTUOP_INPROGRESS, 0);
+		vop = sr16(dev, MV_GLOBALREG(VTU_OP));
+		vid = sr16(dev, MV_GLOBALREG(VTU_VID));
+		vd1 = sr16(dev, MV_GLOBALREG(VTU_DATA1));
+		vd2 = sr16(dev, MV_GLOBALREG(VTU_DATA2));
+		vd3 = sr16(dev, MV_GLOBALREG(VTU_DATA3));
+		vfid = sr16(dev, MV_GLOBALREG(VTU_FID));
+		vsid = sr16(dev, MV_GLOBALREG(VTU_SID));
+		ports = (vd2 << 16) + vd1;
+		printk(KERN_INFO "vid: %d, fid: %d, sid: %d,  dataregs: 0x%x\n"
+				, (vid & 0xFFF), vfid, vsid, ports);
+		if( (vid & MV_VTU_VID_VALID) && (state->buf_size - len > 0)) {
+			len += snprintf(state->buf + len, (state->buf_size - len), 
+				"vid: %d, fid: %d, sid: %d,  dataregs: 0x%X\n"
+				, (vid & 0xFFF), vfid, vsid, ports);
+		}
+	} while( vid & MV_VTU_VID_VALID && ret == 0);
+
+	val->value.s = state->buf;
+	val->len = len;
+	return 0;
+}
+*/
+
+static int mvsw61xx_get_vtu_violation(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	u16 vop, vid;	
+	struct mvsw61xx_state *state = get_state(dev);
+	
+	mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(VTU_OP),
+				MV_VTUOP_INPROGRESS, 0);
+
+	sw16(dev, MV_GLOBALREG(VTU_OP),
+				MV_VTUOP_INPROGRESS | MV_VTUOP_GET_VIOLATION);
+	mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(VTU_OP),
+				MV_VTUOP_INPROGRESS, 0);
+
+	vop = sr16(dev, MV_GLOBALREG(VTU_OP));
+	vid = sr16(dev, MV_GLOBALREG(VTU_VID));
+
+	if( vop & (3 << 5) ) {
+		if( vop & (1 << 5)) {
+			val->len = snprintf(state->buf, state->buf_size, "VTU miss: vid %d, port %d\n", (vid & 0xfff), vop & 0xF);
+		} else if ( vop & (1 << 6) ) {
+			val->len = snprintf(state->buf, state->buf_size, "Member violation: vid %d, port %d\n", (vid & 0xfff), vop & 0xF);
+		}
+	} else {
+		val->len = snprintf(state->buf, state->buf_size, "No violation");
+	}
+	val->value.s = state->buf;
+	return 0;
+}
+
 static int mvsw61xx_get_regvalue(struct switch_dev *dev,
 		const struct switch_attr *attr, struct switch_val *val)
 {
@@ -833,9 +1227,50 @@ static int mvsw61xx_set_regvalue(struct switch_dev *dev,
 	return 0;
 }
 
+static int mvsw61xx_get_fiber_regvalue(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	struct mvsw61xx_state *state = get_state(dev);
+	uint8_t reg = state->reg;
+	uint16_t result;
+    mvsw61xx_phy_read16(dev, 0xF, reg, &result);
+
+	val->len = snprintf(state->buf, state->buf_size, "%d | 0x%X", reg, result);
+	val->value.s = state->buf;
+
+	return 0;
+}
+
+static int mvsw61xx_set_fiber_regvalue(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	struct mvsw61xx_state *state = get_state(dev);
+
+	uint8_t reg;
+	uint16_t value;
+
+	if( strchr( val->value.s, ' ' ) == NULL ){ // have parameter
+		sscanf(val->value.s, "%hhd", &reg);
+		state->reg = reg;
+	} else {
+		sscanf(val->value.s, "%hhd %hd", &reg, &value);
+		state->reg = reg;
+		mvsw61xx_phy_write16(dev, 0xF, reg, value);
+	}
+
+	return 0;
+}
 enum {
 	MVSW61XX_ENABLE_VLAN,
 	MVSW61XX_LAN_DIODE,
+	MVSW61XX_FIBER_SHOW,
+	MVSW61XX_FIBER_CONTROL,
+	MVSW61XX_FIBER_STATUS,
+	MVSW61XX_FIBER_REGVALUE,
+	MVSW61XX_FIBER_POWER,
+	MVSW61XX_VTU_VIOLATION,
+	MVSW61XX_VTU_BASE,
+	MVSW61XX_STU_BASE,
 };
 
 enum {
@@ -849,6 +1284,9 @@ enum {
 	MVSW61XX_PORT_REGISTER,
 	MVSW61XX_PORT_STAT_INGRESS,
 	MVSW61XX_PORT_STAT_EGRESS,
+	MVSW61XX_PORT_FORCE_LINK,
+	MVSW61XX_PORT_STATUS,
+	MVSW61XX_PORT_PHYDET,
 };
 
 struct mvsw61xx_counter mib_counters[] = {
@@ -1093,6 +1531,71 @@ static const struct switch_attr mvsw61xx_global[] = {
 		.get = mvsw61xx_get_vlan_lan_diode,
 		.set = mvsw61xx_set_vlan_lan_diode,
 	},
+
+	[MVSW61XX_FIBER_SHOW] = {
+		.id = MVSW61XX_FIBER_SHOW,
+		.type = SWITCH_TYPE_STRING,
+		.description = "Fiber registers",
+		.name = "fiber_registers",
+		.get = mvsw61xx_get_fiber_regs,
+		.set = NULL
+	},
+	[MVSW61XX_FIBER_CONTROL] = {
+		.id = MVSW61XX_FIBER_CONTROL,
+		.type = SWITCH_TYPE_INT,
+		.description = "Fiber control register",
+		.name = "fiber_control_reg",
+		.get = mvsw61xx_get_fiber_control,
+		.set = mvsw61xx_set_fiber_control,
+	},
+	[MVSW61XX_FIBER_STATUS] = {
+		.id = MVSW61XX_FIBER_STATUS,
+		.type = SWITCH_TYPE_INT,
+		.description = "Fiber status register",
+		.name = "fiber_status_reg",
+		.get = mvsw61xx_get_fiber_status,
+		.set = mvsw61xx_set_fiber_status,
+	},
+	[MVSW61XX_FIBER_REGVALUE] = {
+		.id = MVSW61XX_FIBER_REGVALUE,
+		.type = SWITCH_TYPE_STRING,
+		.description = "MII register and value",
+		.name = "regvalue",
+		.get = mvsw61xx_get_fiber_regvalue,
+		.set = mvsw61xx_set_fiber_regvalue,
+	},
+	[MVSW61XX_FIBER_POWER] = {
+		.id = MVSW61XX_FIBER_POWER,
+		.type = SWITCH_TYPE_INT,
+		.description = "Fiber power enable",
+		.name = "fiber_power",
+		.get = mvsw61xx_get_fiber_power,
+		.set = mvsw61xx_set_fiber_power,
+	},
+	[MVSW61XX_VTU_VIOLATION] = {
+		.id = MVSW61XX_VTU_VIOLATION,
+		.type = SWITCH_TYPE_STRING,
+		.description = "VTU violation",
+		.name = "vtu_violation",
+		.get = mvsw61xx_get_vtu_violation ,
+		.set = NULL,
+	},
+	[MVSW61XX_VTU_BASE] = {
+		.id = MVSW61XX_VTU_BASE,
+		.type = SWITCH_TYPE_STRING,
+		.description = "VTU base",
+		.name = "vtu_base",
+		.get = mvsw61xx_get_vtu_base ,
+		.set = NULL,
+	},
+	[MVSW61XX_STU_BASE] = {
+		.id = MVSW61XX_STU_BASE,
+		.type = SWITCH_TYPE_STRING,
+		.description = "STU base",
+		.name = "stu_base",
+		.get = mvsw61xx_get_stu_base ,
+		.set = NULL,
+	},
 };
 
 static const struct switch_attr mvsw61xx_vlan[] = {
@@ -1155,6 +1658,31 @@ static const struct switch_attr mvsw61xx_port[] = {
 		.get = mvsw61xx_get_stat_egress,
 		.set = NULL,
 	},
+	[MVSW61XX_PORT_FORCE_LINK] = {
+		.id = MVSW61XX_PORT_FORCE_LINK,
+		.type = SWITCH_TYPE_INT,
+		.description = "Port force link",
+		.name = "force_link",
+		.get = mvsw61xx_get_force_link,
+		.set = mvsw61xx_set_force_link,
+	},
+	[MVSW61XX_PORT_STATUS] = {
+		.id = MVSW61XX_PORT_STATUS,
+		.type = SWITCH_TYPE_INT,
+		.description = "Port status register",
+		.name = "status_reg",
+		.get = mvsw61xx_get_port_status,
+		.set = NULL,
+	},
+	[MVSW61XX_PORT_PHYDET] = {
+		.id = MVSW61XX_PORT_PHYDET,
+		.type = SWITCH_TYPE_INT,
+		.description = "Port PHY detection",
+		.name = "phydet",
+		.get = mvsw61xx_get_port_phydet,
+		.set = mvsw61xx_set_port_phydet,
+	},
+
 };
 
 static const struct switch_dev_ops mvsw61xx_ops = {

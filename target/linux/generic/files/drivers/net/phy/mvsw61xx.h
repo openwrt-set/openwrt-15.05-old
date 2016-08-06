@@ -332,6 +332,7 @@ struct mvsw61xx_state {
 
 	char *buf;
 	unsigned int buf_size;
+	u8 reg;
 };
 
 #define get_state(_dev) container_of((_dev), struct mvsw61xx_state, dev)
