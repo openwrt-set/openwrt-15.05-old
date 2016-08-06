@@ -846,7 +846,8 @@ static int mvsw61xx_vtu_program(struct switch_dev *dev)
 		sw16(dev, MV_GLOBALREG(VTU_VID),
 				MV_VTU_VID_VALID | state->vlans[i].vid);
 		sw16(dev, MV_GLOBALREG(VTU_SID), i);
-		sw16(dev, MV_GLOBALREG(VTU_FID), i);
+//		sw16(dev, MV_GLOBALREG(VTU_FID), 0);
+		sw16(dev, MV_GLOBALREG(VTU_FID), state->vlans[i].vid & 0xFFF);
 		sw16(dev, MV_GLOBALREG(VTU_DATA1), v1);
 		sw16(dev, MV_GLOBALREG(VTU_DATA2), v2);
 		sw16(dev, MV_GLOBALREG(VTU_DATA3), 0);
