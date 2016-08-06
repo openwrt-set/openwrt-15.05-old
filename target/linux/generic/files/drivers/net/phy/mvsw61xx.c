@@ -261,6 +261,7 @@ mvsw61xx_set_port_pvid(struct switch_dev *dev, int port, int val)
 	return 0;
 }
 
+
 static int
 mvsw61xx_get_port_link(struct switch_dev *dev, int port,
 		struct switch_port_link *link)
@@ -576,6 +577,17 @@ static int mvsw61xx_vtu_program(struct switch_dev *dev)
 	sw16(dev, MV_GLOBALREG(VTU_OP),
 			MV_VTUOP_INPROGRESS | MV_VTUOP_PURGE);
 
+	sw16(dev, MV_GLOBALREG(VTU_VID), MV_VTU_VID_VALID);
+	sw16(dev, MV_GLOBALREG(VTU_DATA1), 0xCCCC);
+	sw16(dev, MV_GLOBALREG(VTU_DATA2), 0xCCCC);
+	sw16(dev, MV_GLOBALREG(VTU_DATA3), 0);
+	sw16(dev, MV_GLOBALREG(VTU_FID), 0);
+	sw16(dev, MV_GLOBALREG(VTU_SID), 0);
+	sw16(dev, MV_GLOBALREG(VTU_OP),
+				MV_VTUOP_INPROGRESS | MV_VTUOP_STULOAD);
+		mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(VTU_OP),
+				MV_VTUOP_INPROGRESS, 0);
+	
 	/* Write VLAN table */
 	pr_info("apply vlan settings. last_vlan: %d\n", state->last_vlan);
 	for (i = 1; i < state->last_vlan; i++) {
