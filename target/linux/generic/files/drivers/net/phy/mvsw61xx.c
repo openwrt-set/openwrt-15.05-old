@@ -1218,7 +1218,7 @@ static int mvsw61xx_set_regvalue(struct switch_dev *dev,
 	uint16_t value;
 
 	if( strchr( val->value.s, ' ' ) == NULL ){ // have parameter
-		sscanf(val->value.s, "%hhx", &reg);
+		sscanf(val->value.s, "%hhd", &reg);
 		state->ports[port].reg = reg;
 	} else {
 		sscanf(val->value.s, "%hhd %hd", &reg, &value);
