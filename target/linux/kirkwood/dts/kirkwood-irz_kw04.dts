@@ -209,6 +209,10 @@
 			gpio-export,name = "POE_EN";
 			gpio-export,output=<1>;
 		};
+		SFP_CONNECT {
+			gpios = <&msp_ex 2 1>;
+			gpio-export,name = "SFP_CONNECT";
+		};
 		MC{
 			gpios = <&gpio1 5 0>;
 			gpio-export,output=<1>;
