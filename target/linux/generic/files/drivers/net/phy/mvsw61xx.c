@@ -815,7 +815,7 @@ static int mvsw61xx_vtu_program(struct switch_dev *dev)
 	/* Write VLAN table */
 	pr_info("apply vlan settings. last_vlan: %d\n", state->last_vlan);
 	for (i = 1; i < state->last_vlan; i++) {
-		pr_info("apply vlan %d vid: %d port_sstate: 0x%X port_mode: 0x%X\n", i, state->vlans[i].vid, state->vlans[i].port_sstate, state->vlans[i].port_mode );
+		pr_info("apply vlan %d vid: %d port_sstate: 0x%07X port_mode: 0x%07X\n", i, state->vlans[i].vid, state->vlans[i].port_sstate, state->vlans[i].port_mode );
 		if (state->vlans[i].mask == 0 ||
 				state->vlans[i].vid == 0 ||
 				state->vlans[i].port_based == true)
