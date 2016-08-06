@@ -856,33 +856,34 @@ static int mvsw61xx_vtu_program(struct switch_dev *dev)
 				MV_VTUOP_INPROGRESS | MV_VTUOP_LOAD);
 		mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(VTU_OP),
 				MV_VTUOP_INPROGRESS, 0);
+		
 	}
 
 	return 0;
 }
 
-static void mvsw61xx_vlan_port_config(struct switch_dev *dev, int vno)
+static void mvsw61xx_vlan_port_config(struct switch_dev *dev, struct vlan_state *v)
 {
 	struct mvsw61xx_state *state = get_state(dev);
-	struct vlan_state* v;
 	int i, mode;
 
-	v = mvsw61xx_get_vlan_by_vid(dev, vno);
 	if( v == NULL )
 		return;
 
 	for (i = 0; i < dev->ports; i++) {
-		if (!(v->mask & (1 << i)))
+		if (!(v->mask & (1 << i))){
+			printk(KERN_INFO "vid: %d, skip port %d\n", v->vid, i);
 			continue;
+		}
 
 		mode = (v->port_mode >> (i * 4)) & 0xf;
 
 		if(mode != MV_VTUCTL_EGRESS_TAGGED)
 			state->ports[i].pvid = v->vid;
 
-		if (state->vlans[vno].port_based) {
+		if (v->port_based) {
 			state->ports[i].mask |= v->mask;
-			state->ports[i].fdb = vno;
+			state->ports[i].fdb = v->vid;
 		}
 		else
 			state->ports[i].qmode = MV_8021Q_MODE_SECURE;
@@ -931,7 +932,7 @@ static int mvsw61xx_update_state(struct switch_dev *dev)
 	}
 
 	for (i = 1; i < state->last_vlan; i++)
-		mvsw61xx_vlan_port_config(dev, i);
+		mvsw61xx_vlan_port_config(dev, &state->vlans[i] );
 
 	for (i = 0; i < dev->ports; i++) {
 		reg = sr16(dev, MV_PORTREG(VLANID, i)) & ~MV_PVID_MASK;
