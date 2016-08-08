@@ -126,6 +126,11 @@ start_instance() {
 		tun_mtu tun_mtu_extra txqueuelen user verb down push up \
 		ifconfig_ipv6 route_ipv6 server_ipv6 ifconfig_ipv6_pool ifconfig_ipv6_push iroute_ipv6
 
+	config_get config_append "$s" config_append
+	if [ ! -z "$config_append" ]; then
+		cat "$config_append" >> "/var/etc/openvpn-$s.conf"
+	fi
+
 	openvpn_add_instance "$s" "/var/etc" "openvpn-$s.conf"
 }
 
