@@ -40,6 +40,11 @@ boot() {
 
 	# allow wifi modules time to settle
 	sleep 1
+	model=$(fw_printenv | grep ^board_model)
+	if [ ${model:$((${#model}-1)):1} = "w" ]; then
+		pci=$(lspci | head -n1 | awk '{print $1}')
+		echo 1 > /sys/bus/pci/devices/*${pci}/rescan
+	fi
 
 	/sbin/wifi detect > /tmp/wireless.tmp
 	[ -s /tmp/wireless.tmp ] && {
