@@ -95,6 +95,7 @@ define Kernel/Patch/Default
 	find $(LINUX_DIR)/ -name \*.rej -or -name \*.orig | $(XARGS) rm -f
 	$(call PatchDir,$(PKG_BUILD_DIR),$(GENERIC_PATCH_DIR),generic/)
 	$(call PatchDir,$(PKG_BUILD_DIR),$(PATCH_DIR),platform/)
+	$(call PatchDir,$(PKG_BUILD_DIR),$(TOPDIR)/env/patches,board/)
 endef
 
 define Quilt/RefreshDir
@@ -116,12 +117,13 @@ define Quilt/Refresh/Package
 endef
 
 define Quilt/Refresh/Kernel
-	@[ -z "$$(grep -v '^generic/' $(PKG_BUILD_DIR)/patches/series | grep -v '^platform/')" ] || { \
-		echo "All kernel patches must start with either generic/ or platform/"; \
+	@[ -z "$$(grep -v '^generic/' $(PKG_BUILD_DIR)/patches/series | grep -v '^platform/' | grep -v '^board/')" ] || { \
+		echo "All kernel patches must start with either generic/ platform/ or board/"; \
 		false; \
 	}
 	$(call Quilt/RefreshDir,$(PKG_BUILD_DIR),$(GENERIC_PATCH_DIR),generic/)
 	$(call Quilt/RefreshDir,$(PKG_BUILD_DIR),$(PATCH_DIR),platform/)
+	$(call Quilt/RefreshDir,$(PKG_BUILD_DIR),$(TOPDIR)/env/patches,board/)
 endef
 
 define Quilt/Template
