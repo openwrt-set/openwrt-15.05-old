@@ -43,10 +43,9 @@ case "$board" in
 "irz_kw04")
 	ucidef_set_led_default "health" "health" "PWR_GREEN" "1"
 	ucidef_set_led_default "fault" "fault" "PWR_RED" "1"
+	;;
 *)
 	;;
 esac
-
-ucidef_commit_leds
 
 exit 0
