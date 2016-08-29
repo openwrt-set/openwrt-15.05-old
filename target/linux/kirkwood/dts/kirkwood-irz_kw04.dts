@@ -315,6 +315,23 @@
 		status="okay";
 	};
 
+	gpio-keys {
+		compatible = "gpio-keys";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		autorepeat;
+		INTERNET {
+			label = "internet";
+			linux,code = <0xF6>;
+			gpios = <&msp_ex 0 1>;
+		};
+		Reset {
+			label = "reset";
+			linux,code = <0x198>;
+			gpios = <&msp_ex 1 1>;
+		};
+	};
+
 	gpio-keys-polled {
 		compatible = "gpio-keys-polled";
 		#address-cells = <1>;
@@ -376,11 +393,16 @@
 
 	msp_ex: gpio@21 {
 		compatible = "nxp,pca9505";
+		pinctrl-0 = < &pmx_gpio_cpu2 >;
+		pinctrl-names = "default";
 		reg = <0x21>;
 		#gpio-cells = <2>;
 		gpio-controller;
 		ngpios = <40>;
+		interrupt-parent = <&gpio1>;
+		interrupts = < 4 8 >;
 	};
+
 	maxim5971@20 {
 		pinctrl-0 = < &pmx_gpio_1 >;
 		pinctrl-names = "default";
