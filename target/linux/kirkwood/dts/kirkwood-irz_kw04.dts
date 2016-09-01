@@ -209,12 +209,6 @@
 			gpio-export,name = "POE_EN";
 			gpio-export,output=<1>;
 		};
-/*
-		SFP_CONNECT {
-			gpios = <&msp_ex 2 1>;
-			gpio-export,name = "SFP_CONNECT";
-		};
-*/
 		MC{
 			gpios = <&gpio1 5 0>;
 			gpio-export,output=<1>;
@@ -330,6 +324,11 @@
 			linux,code = <0x198>;
 			gpios = <&msp_ex 1 1>;
 		};
+		sfp_connect {
+			label = "sfp_connect";
+			linux,code = <0x100>;
+			gpios = <&msp_ex 2 1>;
+		};
 	};
 
 	gpio-keys-polled {
@@ -400,7 +399,7 @@
 		gpio-controller;
 		ngpios = <40>;
 		interrupt-parent = <&gpio1>;
-		interrupts = < 4 8 >;
+		interrupts = < 3 4 >;
 	};
 
 	maxim5971@20 {
