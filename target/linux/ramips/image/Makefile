@@ -235,7 +235,7 @@ BuildFirmware/Default8M/initramfs=$(call BuildFirmware/OF/initramfs,$(1),$(2),$(
 BuildFirmware/Tplink/squashfs=$(call BuildFirmware/OF/tplink,$(1),$(2),$(3),$(4))
 BuildFirmware/Tplink/initramfs=$(call BuildFirmware/OF/tplink/initramfs,$(1),$(2),$(3),$(4))
 BuildFirmware/IRZ8M/squashfs=$(call BuildFirmware/OF_IRZ,$(1),$(2),$(3),$(ralink_default_fw_size_8M),$(4))
-BuildFirmware/IRZ8M/initramfs=$(call BuildFirmware/OF_IRZ/initramfs,$(1),$(2),$(3),$(4))
+BuildFirmware/IRZ8M/initramfs=$(call BuildFirmware/OF/initramfs,$(1),$(2),$(3),$(4))
 
 ralink_default_fw_size_16M=16121856
 BuildFirmware/Default16M/squashfs=$(call BuildFirmware/OF,$(1),$(2),$(3),$(ralink_default_fw_size_16M),$(4))
@@ -737,14 +737,14 @@ define BuildFirmware/R1/squashfs
 	$(call Image/Build/SysupgradeLegacy,$(2),$(1))
 endef
 
-BuildFirmware/R1/initramfs=$(call BuildFirmware/OFIRZ/initramfs,$(1),$(2),$(3))
+BuildFirmware/R1/initramfs=$(call BuildFirmware/IRZ8M/initramfs,$(1),$(2),$(3))
 
 Image/Build/Profile/R1=$(call BuildFirmware/R1/$(1),$(1),irz_ra01,R1)
 
 ifeq ($(SUBTARGET),rt305x)
 define Image/Build/Profile/irz
 	$(call Image/Build/Profile/R1,$(1))
-	$(call Image/Build/Profile/R0,$(1))
+#	$(call Image/Build/Profile/R0,$(1))
 endef
 endif
 
