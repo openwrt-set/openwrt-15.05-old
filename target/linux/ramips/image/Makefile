@@ -978,6 +978,8 @@ define BuildFirmware/R0/squashfs
 	$(call Image/Build/SysupgradeTAR,$(2),$(1),$(KDIR)/vmlinux-$(2).uImage)
 endef
 
+BuildFirmware/R0/initramfs=$(call BuildFirmware/CustomFlash/$(1),$(1),irz_mt00,R0, 0xbb0000)
+
 Image/Build/Profile/R0=$(call BuildFirmware/R0/$(1),$(1),irz_mt00,R0)
 
 ifeq ($(SUBTARGET),mt7620)
