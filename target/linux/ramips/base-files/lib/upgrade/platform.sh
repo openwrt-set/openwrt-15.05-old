@@ -227,7 +227,13 @@ irz_do_upgrade() {
     local firmware_length=`$(tar xf $tar_file sysupgrade-$board_name/firmware -O | wc -c 2> /dev/null)`
     # write kernel if exist
     [ "$firmware_length" = 0 -o -z "$firmware_mtd" -o "$firmware_length" -gt "$(cat /sys/class/mtd/mtd${firmware_mtd}/size)" ] || {
-	tar xf $tar_file sysupgrade-$board_name/firmware -O | mtd write - firmware
+	sync
+	if [ "$SAVE_CONFIG" -eq 1 ]; then
+	    tar xf $tar_file sysupgrade-$board_name/firmware -O | mtd $MTD_CONFIG_ARGS -j "$CONF_TAR" write - "${PART_NAME:-firmware}"
+	else
+	    tar xf $tar_file sysupgrade-$board_name/firmware -O | mtd write - "${PART_NAME:-firmware}"
+	fi
+	
     }
 }
 
