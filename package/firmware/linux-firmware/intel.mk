@@ -158,7 +158,7 @@ ifneq ($(CONFIG_IWL2030_FW),)
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/iwlwifi-2030-6.ucode $(1)/lib/firmware
 endif
 ifneq ($(CONFIG_IWL3160_FW),)
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/iwlwifi-3160-16.ucode $(1)/lib/firmware
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/iwlwifi-3160-17.ucode $(1)/lib/firmware
 endif
 ifneq ($(CONFIG_IWL5000_FW),)
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/iwlwifi-5000-5.ucode $(1)/lib/firmware
