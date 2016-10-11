@@ -164,8 +164,8 @@ define Image/Build/SysupgradeLegacy
 	rm -rf "$(KDIR_TMP)/sysupgrade-legacy-$(1)/*"
 	echo "BOARD=$(1)" > "$(KDIR_TMP)/sysupgrade-legacy-$(1)/CONTROL"
 	echo "LEGACY=y" >> "$(KDIR_TMP)/sysupgrade-legacy-$(1)/CONTROL"
-	dd if=$(BIN_DIR)/$(IMG_PREFIX)-$(1)-$(2)-sysupgrade.bin of="$(KDIR_TMP)/sysupgrade-legacy-$(1)/kernel" bs=1M count=1
-	dd if=$(BIN_DIR)/$(IMG_PREFIX)-$(1)-$(2)-sysupgrade.bin of="$(KDIR_TMP)/sysupgrade-legacy-$(1)/root" bs=1M skip=1
+	cp $(KDIR)/vmlinux-$(1).uImage $(KDIR_TMP)/sysupgrade-legacy-$(1)/kernel
+	cp $(KDIR)/root.$(2) $(KDIR_TMP)/sysupgrade-legacy-$(1)/root
 	[ ! -d "$(TOPDIR)/env/preupgrade.d" ] || $(CP) "$(TOPDIR)/env/preupgrade.d/" "$(KDIR_TMP)/sysupgrade-legacy-$(1)/"
 	(cd "$(KDIR_TMP)"; $(TAR) cvf \
 		"$(BIN_DIR)/$(IMG_PREFIX)-$(1)-$(2)-sysupgrade-legacy.tar" --transform="s/sysupgrade-legacy/sysupgrade/" sysupgrade-legacy-$(1))
