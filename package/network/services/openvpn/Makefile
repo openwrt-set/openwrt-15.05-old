@@ -102,6 +102,8 @@ define Package/openvpn-$(BUILD_VARIANT)/install
 		$(1)/etc/init.d \
 		$(1)/etc/config \
 		$(1)/etc/openvpn \
+		$(1)/etc/openvpn/ip-up.d \
+		$(1)/etc/openvpn/ip-down.d \
 		$(1)/lib/upgrade/keep.d
 
 	$(INSTALL_BIN) \
@@ -111,6 +113,15 @@ define Package/openvpn-$(BUILD_VARIANT)/install
 	$(INSTALL_BIN) \
 		files/openvpn.init \
 		$(1)/etc/init.d/openvpn
+
+	$(INSTALL_BIN) \
+		files/openvpn.ip-down \
+		$(1)/etc/openvpn/ip-down
+
+	$(INSTALL_BIN) \
+		files/openvpn.ip-up \
+		$(1)/etc/openvpn/ip-up
+
 
 	$(INSTALL_CONF) files/openvpn.config \
 		$(1)/etc/config/openvpn

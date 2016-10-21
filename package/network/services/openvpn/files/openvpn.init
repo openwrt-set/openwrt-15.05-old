@@ -64,6 +64,9 @@ openvpn_add_instance() {
 		--syslog "openvpn($name)" \
 		--status "/var/run/openvpn.$name.status" \
 		--cd "$dir" \
+        --up-delay \
+	    --up "/etc/openvpn/ip-up" \
+	    --down "/etc/openvpn/ip-down" \
 		--config "$conf"
 	procd_set_param file "$dir/$conf"
 	procd_set_param respawn
@@ -125,6 +128,8 @@ start_instance() {
 		tls_cipher tls_remote tls_timeout tls_verify tmp_dir topology tran_window \
 		tun_mtu tun_mtu_extra txqueuelen user verb down push up \
 		ifconfig_ipv6 route_ipv6 server_ipv6 ifconfig_ipv6_pool ifconfig_ipv6_push iroute_ipv6
+
+	echo "script-security 3 system" >> "/var/etc/openvpn-$s.conf"
 
 	config_get config_append "$s" config_append
 	if [ ! -z "$config_append" ]; then

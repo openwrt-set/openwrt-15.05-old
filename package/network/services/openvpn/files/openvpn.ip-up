@@ -1,0 +1,23 @@
+#!/bin/sh
+
+[ -z "$1" ] && exit 0
+
+. /lib/irz/network_utils.sh
+
+ifname=$1
+interface=$(devicename_interface $ifname)
+
+[ -n "$interface" ] && {
+  . /lib/netifd/netifd-proto.sh
+  proto_set_available $interface 1
+  /sbin/ifup $interface
+}
+
+[ -d /etc/openvpn/ip-up.d/ ] && {
+  for SCRIPT in /etc/openvpn/ip-up.d/*
+  do
+    [ -x "$SCRIPT" ] && "$SCRIPT" "$@"
+  done
+}
+
+exit 0

@@ -1,0 +1,20 @@
+#!/bin/sh
+
+[ -z "$1" ] && exit 1
+
+. /lib/irz/network_utils.sh
+
+ifname=$1
+interface=$(devicename_interface $ifname)
+[ -n "$interface" ] && /sbin/ifdown $interface
+
+ifconfig $ifname 0.0.0.0 down
+
+[ -d /etc/openvpn/ip-down.d/ ] && {
+  for SCRIPT in /etc/openvpn/ip-down.d/*
+  do
+    [ -x "$SCRIPT" ] && "$SCRIPT" "$@"
+  done
+}
+
+exit 0
