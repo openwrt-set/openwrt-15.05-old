@@ -4,6 +4,7 @@ ABORT   ERROR
 REPORT  CONNECT
 TIMEOUT 10
 ""      "AT&F"
+OK      "AT+CMEE=0"
 OK      "ATE1"
 OK      'AT+CGDCONT=1,"IP","$USE_APN"'
 OK      'AT+CGDCONT=2,"IP","$USE_APN"'
