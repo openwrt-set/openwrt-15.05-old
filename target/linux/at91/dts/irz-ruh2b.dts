@@ -1,0 +1,254 @@
+/*
+ * irz-ruh2b.dts - Device Tree file for irz ruh2b router board
+ *
+ *  Copyright (C) 2016 Nikita Nazarenko <nnazarenko@radiofid.com>
+ *  based on 2012 Joachim Eastwood <manabian@gmail.com>
+ *
+ * Licensed under GPLv2 only
+ */
+/dts-v1/;
+#include "at91rm9200.dtsi"
+
+/ {
+	model = "iRZ RUH2b Router";
+	compatible = "irz,ruh2b", "atmel,at91rm9200";
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+
+	memory {
+		reg = <0x20000000 0x4000000>;
+	};
+
+	clocks {
+		slow_xtal {
+			clock-frequency = <32768>;
+		};
+
+		main_xtal {
+			clock-frequency = <18432000>;
+		};
+	};
+
+	ahb {
+		apb {
+
+			macb0: ethernet@fffbc000 {
+				compatible = "cdns,at91rm9200-emac";
+				phy-mode = "mii";
+				status = "okay";
+				pinctrl-0 = <&pinctrl_macb_rmii_mii &pinctrl_macb_rmii>;
+				phy0: ethernet-phy {
+				    reg = <2>;
+				};
+			};
+			
+			usart0: serial@fffc0000 {
+				pinctrl-0 =
+						<&pinctrl_uart0>;
+				rts-gpios = <&pioD 21 GPIO_ACTIVE_LOW>;
+				cts-gpios = <&pioD 20 GPIO_ACTIVE_LOW>;
+				status = "okay";
+			};
+			
+			usart1: serial@fffc4000 {
+				pinctrl-0 =
+						<&pinctrl_uart1 >;
+				linux,rs485-enabled-at-boot-time;
+				status = "okay";
+			};
+			usart2: serial@fffc8000 {
+				pinctrl-0 =
+						<&pinctrl_uart2>;
+				status = "okay";
+			};
+			usart3: serial@fffcc000 {
+				pinctrl-0 =
+						<&pinctrl_uart3>;
+				status = "okay";
+			};
+			dbgu: serial@fffff200 {
+				pinctrl-0 = <&pinctrl_dbgu>;
+				status = "okay";
+			};
+
+			rtc: rtc@fffffe00 {
+				status = "disabled";
+			};
+			mmc0: mmc@fffb4000 {
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_mmc0_clk &pinctrl_mmc0_slot0_cmd_dat0 &pinctrl_mmc0_slot0_dat1_3>;
+				slot@0 {
+				    reg = <0>;
+				    bus-width = <4>;
+				    cd-gpios = <&pioA 24 0>;
+				    cd-inverted;
+				};
+			};
+		};
+
+		usb0: ohci@00300000 {
+			num-ports = <2>;
+			status = "okay";
+		};
+
+		nor_flash@10000000 {
+			compatible = "cfi-flash";
+			reg = <0x10000000 0x800000>;
+			linux,mtd-name = "physmap-flash.0";
+			bank-width = <2>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			boot@0 {
+				label = "boot";
+				reg = <0x00000 0x4000>;
+			};
+			settings@4000 {
+				label = "settings";
+				reg = <0x4000 0x8000>;
+			};
+			hwinfo@c000 {
+				label = "hwinfo";
+				reg = <0xC000 0x2000>;
+			};
+			nv@e000 {
+				label = "nv";
+				reg = <0xE000 0x2000>;
+			};
+			uboot@10000 {
+				label = "u-boot";
+				reg = <0x10000 0x10000>;
+			};
+			kernel@20000 {
+				label = "kernel";
+				reg = <0x20000 0x160000>;
+			};
+			rwfs@170000  {
+				label = "rwfs";
+				reg = <0x180000 0x180000>;
+			};
+			root@2f0000  {
+				label = "root";
+				reg = <0x300000 0x500000>;
+			};
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		wlan_red {
+			label = "WLAN_LOW";
+			gpios = <&pioD 24 GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "none";
+		};
+
+		wlan_yellow {
+			label = "WLAN_HIGH";
+			gpios = <&pioD 25 GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "none";
+		};
+
+		csq_red {
+			label = "CSQ_LOW";
+			gpios = <&pioD 26 GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "none";
+		};
+
+		csq_yellow {
+			label = "CSQ_HIGH";
+			gpios = <&pioD 27 GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "none";
+		};
+
+		sim1 {
+			label = "SIM1";
+			gpios = <&pioD 19 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "none";
+		};
+
+		sim2 {
+			label = "SIM2";
+			gpios = <&pioD 23 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "none";
+		};
+
+		busy {
+			label = "BUSY";
+			gpios = <&pioB 29 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "timer";
+		};
+	};
+	gpio_keys {
+		compatible = "gpio-keys";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		autorepeat;
+
+		USER1 {
+			label = "Reset";
+			linux,code = < 0x100 >;
+			gpios = <&pioB 28 GPIO_ACTIVE_LOW>;
+		};
+	};
+	gpios {
+		compatible = "gpio-export";
+		simsel {
+		    gpios = <&pioD 16 GPIO_ACTIVE_LOW>;
+		    gpio-export,name  = "SIM_SELECT";
+		    gpio-export,output = <0>;
+		};
+		SIM1_PRES {
+		    gpios = <&pioB 11 GPIO_ACTIVE_LOW>;
+		    gpio-export,name  = "SIM1_PRES";
+		};
+
+		SIM2_PRES {
+		    gpios = <&pioB 9 GPIO_ACTIVE_LOW>;
+		    gpio-export,name  = "SIM2_PRES";
+		};
+
+		RS485_PRES {
+		    gpios = <&pioB 2 GPIO_ACTIVE_LOW>;
+		    gpio-export,name  = "RS485_PRESENT";
+		};
+
+		USB_POWER {
+		    gpios = <&pioC 15 GPIO_ACTIVE_LOW>;
+		    gpio-export,name  = "USB_POWER";
+		    gpio-export,output = <1>;
+		};
+		GSM_POWER {
+		    gpios = <&pioC 12 GPIO_ACTIVE_LOW>;
+		    gpio-export,name  = "GSM_POWER";
+		    gpio-export,output = <0>;
+		};
+		RE {
+		    gpios = <&pioB 26 GPIO_ACTIVE_LOW>;
+		    gpio-export,name  = "RE";
+		    gpio-export,output = <1>;
+		};
+	};
+	i2c@0 {	
+		status = "okay";
+		m41t00: m41t00@68 {
+		compatible = "stm,m41t00";
+		reg = < 0x68 >;
+		};
+	};
+};
+
+&spi0 {
+	status = "okay";
+	cs-gpios = <&pioA 3 0>, <0>, <0>, <0>;
+	mtd_dataflash@0 {
+		compatible = "atmel,at45", "atmel,dataflash";
+		spi-max-frequency = <15000000>;
+		reg = <0>;
+	};
+};
+
+

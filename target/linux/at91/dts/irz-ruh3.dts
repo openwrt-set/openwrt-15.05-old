@@ -1,0 +1,376 @@
+/*
+ * irz-ruh2b.dts - Device Tree file for irz ruh2b router board
+ *
+ *  Copyright (C) 2016 Nikita Nazarenko <nnazarenko@radiofid.com>
+ *  based on 2012 Joachim Eastwood <manabian@gmail.com>
+ *
+ * Licensed under GPLv2 only
+ */
+/dts-v1/;
+#include "at91rm9200.dtsi"
+
+/ {
+	model = "iRZ RUH3 Router";
+	compatible = "irz,ruh3", "atmel,at91rm9200";
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+
+	memory {
+		reg = <0x20000000 0x4000000>;
+	};
+
+	clocks {
+		slow_xtal {
+			clock-frequency = <32768>;
+		};
+
+		main_xtal {
+			clock-frequency = <18432000>;
+		};
+	};
+
+	ahb {
+		apb {
+
+			macb0: ethernet@fffbc000 {
+				compatible = "cdns,at91rm9200-emac";
+				phy-mode = "mii";
+				status = "okay";
+				pinctrl-0 = <&pinctrl_macb_rmii_mii &pinctrl_macb_rmii>;
+				phy0: ethernet-phy {
+				    reg = <2>;
+				};
+			};
+
+			usart0: serial@fffc0000 {
+				pinctrl-0 =
+						<&pinctrl_uart0>;
+				status = "okay";
+			};
+
+			usart1: serial@fffc4000 {
+				pinctrl-0 =
+						<&pinctrl_uart1 >;
+				status = "okay";
+			};
+
+			usart2: serial@fffc8000 {
+				pinctrl-0 =
+						<&pinctrl_uart2>;
+				status = "okay";
+				linux,rs485-enabled-at-boot-time;
+			};
+
+			usart3: serial@fffcc000 {
+				pinctrl-0 =
+						<&pinctrl_uart3>;
+				status = "okay";
+			};
+
+			dbgu: serial@fffff200 {
+				pinctrl-0 = <&pinctrl_dbgu>;
+				status = "okay";
+			};
+
+			rtc: rtc@fffffe00 {
+				status = "disabled";
+			};
+
+			mmc0: mmc@fffb4000 {
+				status = "okay";
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_mmc0_clk &pinctrl_mmc0_slot0_cmd_dat0 &pinctrl_mmc0_slot0_dat1_3>;
+				slot@0 {
+				    reg = <0>;
+				    bus-width = <1>;
+				    cd-gpios = <&pioB 7 0>;
+				    cd-inverted;
+				};
+			};
+		};
+
+		usb0: ohci@00300000 {
+			num-ports = <2>;
+			status = "okay";
+		};
+
+		nor_flash@10000000 {
+			compatible = "cfi-flash";
+			reg = <0x10000000 0x800000>;
+			linux,mtd-name = "physmap-flash.0";
+			bank-width = <2>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			boot@0 {
+				label = "boot";
+				reg = <0x00000 0x4000>;
+			};
+			settings@4000 {
+				label = "settings";
+				reg = <0x4000 0x8000>;
+			};
+			hwinfo@c000 {
+				label = "hwinfo";
+				reg = <0xC000 0x2000>;
+			};
+			nv@e000 {
+				label = "nv";
+				reg = <0xE000 0x2000>;
+			};
+			uboot@10000 {
+				label = "u-boot";
+				reg = <0x10000 0x10000>;
+			};
+			kernel@20000 {
+				label = "kernel";
+				reg = <0x20000 0x160000>;
+			};
+			rwfs@170000  {
+				label = "rwfs";
+				reg = <0x180000 0x180000>;
+			};
+			root@2f0000  {
+				label = "root";
+				reg = <0x300000 0x500000>;
+			};
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		sim1 {
+			label = "SIM1";
+			gpios = <&pioB 6 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "none";
+		};
+
+		sim2 {
+			label = "SIM2";
+			gpios = <&pioD 0 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "none";
+		};
+
+		umts {
+			label = "3G";
+			gpios = <&pioB 29 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "none";
+		};
+
+		csq3 {
+			label = "CSQ3";
+			gpios = <&pioD 10 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "none";
+		};
+
+		csq2 {
+			label = "CSQ2";
+			gpios = <&pioD 11 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "none";
+		};
+
+		csq1 {
+			label = "CSQ1";
+			gpios = <&pioD 12 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "none";
+		};
+
+		csq0 {
+			label = "CSQ0";
+			gpios = <&pioD 13 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "none";
+		};
+
+		PPP {
+			label = "PPP";
+			gpios = <&pioD 18 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "none";
+		};
+
+		btn_i {
+			label = "BTN_I";
+			gpios = <&pioC 2 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "none";
+		};
+
+		user1 {
+			label = "USER1";
+			gpios = <&pioD 15 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "none";
+		};
+		user2 {
+			label = "USER2";
+			gpios = <&pioD 16 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "none";
+		};
+		user3 {
+			label = "USER3";
+			gpios = <&pioD 17 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "none";
+		};
+
+		power {
+			label = "POWER";
+			gpios = <&pioD 26 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "timer";
+		};
+	};
+	gpio_keys {
+		compatible = "gpio-keys";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		autorepeat;
+
+		USER1 {
+			label = "Internet";
+			linux,code = < 0x100 >;
+			gpios = <&pioB 28 GPIO_ACTIVE_LOW>;
+		};
+		USER2 {
+			label = "Reset";
+			linux,code = < 0x101 >;
+			gpios = <&pioD 14 GPIO_ACTIVE_LOW>;
+		};
+	};
+	gpio_lv: gpio-lv@0{
+		pinctrl-names = "default";
+		compatible = "gpio-lv";
+		#gpio-cells = <2>;
+		gpio-controller;
+		io1 {
+			input_pin       = <&pioD 4 0x0>;
+			direction_pin   = <&pioD 3 0x0>;
+		};
+		io2 {
+			input_pin       = <&pioD 6 0x0>;
+			direction_pin   = <&pioD 5 0x0>;
+		};
+		io3 {
+			input_pin       = <&pioD 8 0x0>;
+			direction_pin   = <&pioD 7 0x0>;
+		};
+		io4 {
+			input_pin       = <&pioD 10 0x0>;
+			direction_pin   = <&pioD 9 0x0>;
+		};
+		io5 {
+			input_pin       = <&pioD 12 0x0>;
+			direction_pin   = <&pioD 11 0x0>;
+		};
+		io6 {
+			input_pin       = <&pioD 20 0x0>;
+			direction_pin   = <&pioD 19 0x0>;
+		};
+		io7 {
+			input_pin       = <&pioD 22 0x0>;
+			direction_pin   = <&pioD 21 0x0>;
+		};
+		io8 {
+			input_pin       = <&pioD 27 0x0>;
+			direction_pin   = <&pioD 23 0x0>;
+		};
+		io9 {
+			input_pin       = <&pioC 15 0x0>;
+			direction_pin   = <&pioC 14 0x0>;
+		};
+	};
+	gpios {
+		compatible = "gpio-export";
+		simsel {
+		    gpios = <&pioA 24 GPIO_ACTIVE_LOW>;
+		    gpio-export,name  = "SIM_SELECT";
+		    gpio-export,output = <0>;
+		};
+		SIM1_PRES {
+		    gpios = <&pioB 11 GPIO_ACTIVE_LOW>;
+		    gpio-export,name  = "SIM1_PRES";
+		};
+
+		SIM2_PRES {
+		    gpios = <&pioB 9 GPIO_ACTIVE_LOW>;
+		    gpio-export,name  = "SIM2_PRES";
+		};
+
+		RS485_PRES {
+		    gpios = <&pioC 0 GPIO_ACTIVE_LOW>;
+		    gpio-export,name  = "RS485_PRESENT";
+		};
+
+		USB_POWER {
+		    gpios = <&pioC 8 GPIO_ACTIVE_LOW>;
+		    gpio-export,name  = "USB_POWER";
+		    gpio-export,output = <1>;
+		};
+		GSM_POWER {
+		    gpios = <&pioA 4 GPIO_ACTIVE_LOW>;
+		    gpio-export,name  = "GSM_POWER";
+		    gpio-export,output = <0>;
+		};
+		RE {
+		    gpios = <&pioB 2 GPIO_ACTIVE_LOW>;
+		    gpio-export,name  = "RE";
+		    gpio-export,output = <1>;
+		};
+		BUZZER {
+		    gpios = <&pioB 10 0>;
+		    gpio-export,name  = "BUZZER";
+		    gpio-export,output = <0>;
+		};
+		IO_1 {
+		    gpios = <&gpio_lv 0 0>;
+		    gpio-export,name  = "IO_1";
+		    gpio-export,direction_may_change;
+		};
+		IO_2 {
+		    gpios = <&gpio_lv 1 0>;
+		    gpio-export,name  = "IO_2";
+		    gpio-export,direction_may_change;
+		};
+		IO_3 {
+		    gpios = <&gpio_lv 2 0>;
+		    gpio-export,name  = "IO_3";
+		    gpio-export,direction_may_change;
+		};
+		IO_4 {
+		    gpios = <&gpio_lv 3 0>;
+		    gpio-export,name  = "IO_4";
+		    gpio-export,direction_may_change;
+		};
+		IO_5 {
+		    gpios = <&gpio_lv 4 0>;
+		    gpio-export,name  = "IO_5";
+		    gpio-export,direction_may_change;
+		};
+		IO_6 {
+		    gpios = <&gpio_lv 5 0>;
+		    gpio-export,name  = "IO_6";
+		    gpio-export,direction_may_change;
+		};
+		IO_7 {
+		    gpios = <&gpio_lv 6 0>;
+		    gpio-export,name  = "IO_7";
+		    gpio-export,direction_may_change;
+		};
+		IO_8 {
+		    gpios = <&gpio_lv 7 0>;
+		    gpio-export,name  = "IO_8";
+		    gpio-export,direction_may_change;
+		};
+		IO_9 {
+		    gpios = <&gpio_lv 8 0>;
+		    gpio-export,name  = "IO_9";
+		    gpio-export,direction_may_change;
+		};
+	};
+	i2c@0 {	
+		status = "okay";
+		m41t00: m41t00@68 {
+		compatible = "stm,m41t00";
+		reg = < 0x68 >;
+		};
+	};
+};
+

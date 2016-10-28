@@ -23,6 +23,11 @@ define Build/Compile
 	fi
 endef
 
+define Image/Prepare/Template
+	$(CC) -E -nostdinc -I$(DTS_DIR) -I$(DTS_DIR)/include -I$(LINUX_DIR)/drivers/of/testcase-data -undef -D__DTS__ -x assembler-with-cpp -o /dev/stdout "../dts/$(1).dts" | \
+	$(LINUX_DIR)/scripts/dtc/dtc -O dtb -i "$(DTS_DIR)" -o "$(DTS_DIR)/$(1).dtb"
+endef
+
 define Image/Prepare
 	cp $(LINUX_DIR)/arch/arm/boot/Image $(KDIR)/Image
 	cp $(LINUX_DIR)/arch/arm/boot/zImage $(KDIR)/zImage
@@ -64,6 +69,9 @@ Image/Build/Kernel/USBA9G20=$(call MkuImageDtb,usb_a9g20,usb_a9g20)
 Image/Build/Kernel/ETHERNUT5=$(call MkuImageDtb,ethernut5,ethernut5)
 # Exegin
 Image/Build/Kernel/Q5XR5=$(call MkOftree,q5xr5,at91-q5xr5)
+# IRZ
+Image/Build/Kernel/IRZ_RUH2B=$(call MkuImageDtb,irz_ruh2b,irz_ruh2b)
+Image/Build/Kernel/IRZ_RUH3=$(call MkuImageDtb,irz_ruh3,irz_ruh3)
 
 
 define Image/Build/Kernel/Default
@@ -86,6 +94,8 @@ define Image/Build/Kernel/Default
 	$(call Image/Build/Kernel/USBA9G20)
 	$(call Image/Build/Kernel/ETHERNUT5)
 	$(call Image/Build/Kernel/Q5XR5)
+	$(call Image/Build/Kernel/RUH2B)
+	$(call Image/Build/Kernel/RUH3)
 endef
 
 define Image/BuildKernel

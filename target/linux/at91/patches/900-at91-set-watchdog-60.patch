@@ -1,0 +1,19 @@
+commit 3a395e4fddb24b1002380974ebf4ab65b218f168
+Author: Nikita Nazarenko <nnazarenko@radiofid.com>
+Date:   Mon Sep 5 12:47:41 2016 +0300
+
+    ar91rm9200_wdt: set watchdog default time to 60 seconds
+
+diff --git a/drivers/watchdog/at91rm9200_wdt.c b/drivers/watchdog/at91rm9200_wdt.c
+index e12a797..65c60a8 100644
+--- a/drivers/watchdog/at91rm9200_wdt.c
++++ b/drivers/watchdog/at91rm9200_wdt.c
+@@ -32,7 +32,7 @@
+ #include <linux/of.h>
+ #include <linux/of_device.h>
+ 
+-#define WDT_DEFAULT_TIME	5	/* seconds */
++#define WDT_DEFAULT_TIME	60	/* seconds */
+ #define WDT_MAX_TIME		256	/* seconds */
+ 
+ static int wdt_time = WDT_DEFAULT_TIME;
