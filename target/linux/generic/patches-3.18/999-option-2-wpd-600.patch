@@ -10,7 +10,7 @@ Date:   Tue Mar 3 16:48:10 2015 +0300
  #define WETELECOM_PRODUCT_WMD200		0x6801
  #define WETELECOM_PRODUCT_6802			0x6802
  #define WETELECOM_PRODUCT_WMD300		0x6803
-+#define WETELECOM_WPD_600			0x9070
++#define WETELECOM_PRODUCT_WPD600		0x9070
  
  struct option_blacklist_info {
  	/* bitfield of interface numbers for OPTION_BLACKLIST_SENDSETUP */
