@@ -9,5 +9,10 @@ define Profile/R0
 	NAME:=R0 board
 endef
 
+define Profile/R2
+	NAME:=R2 board
+endef
+
 
 $(eval $(call Profile,R0))
+$(eval $(call Profile,R2))

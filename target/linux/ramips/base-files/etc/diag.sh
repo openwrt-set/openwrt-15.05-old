@@ -262,6 +262,9 @@ get_status_led() {
 	irz_mt00)
 		status_led="power"
 		;;
+	irz_mt02)
+		status_led="status"
+		;;
 	esac
 }
 

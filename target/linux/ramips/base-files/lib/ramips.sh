@@ -442,6 +442,9 @@ ramips_board_detect() {
 	*"R0 board")
 		name="irz_mt00"
 		;;
+	*"R2 board")
+		name="irz_mt02"
+		;;
 	*)
 		name="generic"
 		;;

@@ -744,7 +744,6 @@ Image/Build/Profile/R1=$(call BuildFirmware/R1/$(1),$(1),irz_ra01,R1)
 ifeq ($(SUBTARGET),rt305x)
 define Image/Build/Profile/irz
 	$(call Image/Build/Profile/R1,$(1))
-#	$(call Image/Build/Profile/R0,$(1))
 endef
 endif
 
@@ -979,8 +978,10 @@ define BuildFirmware/R0/squashfs
 endef
 
 BuildFirmware/R0/initramfs=$(call BuildFirmware/CustomFlash/$(1),$(1),irz_mt00,R0, 0xbb0000)
-
 Image/Build/Profile/R0=$(call BuildFirmware/R0/$(1),$(1),irz_mt00,R0)
+
+BuildFirmware/R2/initramfs=$(call BuildFirmware/CustomFlash/$(1),$(1),irz_mt02,R2, 0xbb0000)
+Image/Build/Profile/R2=$(call BuildFirmware/R0/$(1),$(1),irz_mt02,R2)
 
 ifeq ($(SUBTARGET),mt7620)
 define Image/Build/Profile/Default
@@ -1016,6 +1017,7 @@ define Image/Build/Profile/Default
 	$(call Image/Build/Profile/MT7620aPINMODULE,$(1))
 	$(call Image/Build/Profile/RX15,$(1))
 	$(call Image/Build/Profile/R0,$(1))
+	$(call Image/Build/Profile/R2,$(1))
 endef
 endif
 

@@ -175,6 +175,7 @@ platform_check_image() {
 		return 0
 		;;
 	irz_mt00 |\
+	irz_mt02 |\
 	irz_ra01 )
 		[ "$magic" != "27051956" -a "$(tar xf $1 sysupgrade-$board/CONTROL -O | wc -c 2> /dev/null)" = "0" ] && {
 			echo "Invalid image type."
@@ -202,6 +203,7 @@ platform_do_upgrade() {
 
 	case "$board" in
 	irz_mt00 |\
+	irz_mt02 |\
 	irz_ra01 )
 		local magic="$(get_magic_long "$1")"
 		if [ "$magic" = "27051956" ]; then
