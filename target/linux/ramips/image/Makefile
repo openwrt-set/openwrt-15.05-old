@@ -973,15 +973,20 @@ microwrt_mtd_size=16515072
 Image/Build/Profile/MicroWRT=$(call BuildFirmware/CustomFlash/$(1),$(1),microwrt,MicroWRT,$(microwrt_mtd_size))
 
 define BuildFirmware/R0/squashfs
-	$(call BuildFirmware/CustomFlash/$(1),$(1),irz_mt00,R0, 0xbb0000)
+	$(call BuildFirmware/CustomFlash/$(1),$(1),irz_mt00,R0,12255232)
 	$(call Image/Build/SysupgradeTAR,$(2),$(1),$(KDIR)/vmlinux-$(2).uImage)
 endef
 
-BuildFirmware/R0/initramfs=$(call BuildFirmware/CustomFlash/$(1),$(1),irz_mt00,R0, 0xbb0000)
+define BuildFirmware/R2/squashfs
+	$(call BuildFirmware/CustomFlash/$(1),$(1),irz_mt02,R2,12255232)
+	$(call Image/Build/SysupgradeTAR,$(2),$(1),$(KDIR)/vmlinux-$(2).uImage)
+endef
+
+BuildFirmware/R0/initramfs=$(call BuildFirmware/CustomFlash/$(1),$(1),irz_mt00,R0,12255232)
 Image/Build/Profile/R0=$(call BuildFirmware/R0/$(1),$(1),irz_mt00,R0)
 
-BuildFirmware/R2/initramfs=$(call BuildFirmware/CustomFlash/$(1),$(1),irz_mt02,R2, 0xbb0000)
-Image/Build/Profile/R2=$(call BuildFirmware/R0/$(1),$(1),irz_mt02,R2)
+BuildFirmware/R2/initramfs=$(call BuildFirmware/CustomFlash/$(1),$(1),irz_mt02,R2,12255232)
+Image/Build/Profile/R2=$(call BuildFirmware/R2/$(1),$(1),irz_mt02,R2)
 
 ifeq ($(SUBTARGET),mt7620)
 define Image/Build/Profile/Default
