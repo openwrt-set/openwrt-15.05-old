@@ -42,6 +42,11 @@
 				};
 			};
 		};
+		uart@500 {
+		    status = "okay";
+		    pinctrl-names = "default";
+			pinctrl-0 = <&uartf_pins>;
+		};
 	    	gpio@600 {
 			status = "okay";
 		};
@@ -59,11 +64,20 @@
 	pinctrl {
 		state_default: pinctrl0 {
 			gpio {
-				ralink,group = "rgmii1", "rgmii2", "pcie", "wled";
+				ralink,group = "rgmii1", "rgmii2", "pcie", "wled", "wdt";
 				ralink,function = "gpio";
 			};
+			sd {
+				ralink,group = "nd_sd";
+				ralink,function = "sd";
+			};
 		};
-		
+		uartf_pins: uartf {
+			uartf {
+				ralink,group = "uartf";
+				ralink,function = "uartf";
+			};
+		};
 	};
 
 	ethernet@10100000 {
@@ -99,6 +113,68 @@
 		status = "disabled";
 	};
 
+	spi_gpio {
+	    compatible = "spi-gpio";
+	    #address-cells = <0x1>;
+	    ranges;
+	    gpio-sck  = <&gpio2 22 0>;
+	    gpio-mosi = <&gpio2 23 0>;
+	    cs-gpios  = <&gpio2 21 0>;
+	    num-chipselects = <1>;
+
+
+	    gpiosh: gpio_shift@0 {
+		compatible = "fairchild,74hc595";
+		reg = <0>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		registers-number = <2>;
+		spi-max-frequency = <10000>;
+	    };
+	};
+
+	gpio_tr: gpio-tr@0 {
+	    compatible = "gpio-tr";
+	    #address-cells = <1>;
+	    #gpio-cells = <2>;
+	    gpio-controller;
+	    io1 {
+		low_pin		= <&gpiosh 1  0x0>;
+		high_pin	= <&gpiosh 9  0x0>;
+		input_pin	= <&gpio2  31 0x0>;
+	    };
+	    io2 {
+		low_pin		= <&gpiosh 2  0x0>;
+		high_pin	= <&gpiosh 10 0x0>;
+		input_pin	= <&gpio2  30 0x0>;
+	    };
+	    io3 {
+		low_pin		= <&gpiosh 3  0x0>;
+		high_pin	= <&gpiosh 11 0x0>;
+		input_pin	= <&gpio2  29 0x0>;
+	    };
+	    io4 {
+		low_pin		= <&gpiosh 4  0x0>;
+		high_pin	= <&gpiosh 12 0x0>;
+		input_pin	= <&gpio2  28 0x0>;
+	    };
+	    io5 {
+		low_pin		= <&gpiosh 5  0x0>;
+		high_pin	= <&gpiosh 13 0x0>;
+		input_pin	= <&gpio2  27 0x0>;
+	    };
+	    io6 {
+		low_pin		= <&gpiosh 6  0x0>;
+		high_pin	= <&gpiosh 14 0x0>;
+		input_pin	= <&gpio2  26 0x0>;
+	    };
+	    io7 {
+		low_pin		= <&gpiosh 7  0x0>;
+		high_pin	= <&gpiosh 15 0x0>;
+		input_pin	= <&gpio2  25 0x0>;
+	    };
+	};
+
 	gpio {
 		compatible = "gpio-export";
 		GSM_POWER {
@@ -112,53 +188,97 @@
 		    gpio-export,output = <1>;
 		};
 		RS232_ENABLE {
-		    gpios = <&gpio1 7 1>;
+		    gpios = <&gpio1 7 0>;
 		    gpio-export,name  = "rs232:enable";
 		    gpio-export,output = <1>;
 		};
 		RS485_ENABLE {
 		    gpios = <&gpio1 10 1>;
-		    gpio-export,name  = "rs232:enable";
+		    gpio-export,name  = "rs485:enable";
 		    gpio-export,output = <1>;
 		};
-		
+		sim_switch {
+		    gpios = <&gpio2 5 0>;
+		    gpio-export,name  = "sim:switch";
+		    gpio-export,output = <1>;
+		};
+		OPTO_IN {
+		    gpios = <&gpio2 6 0>;
+		    gpio-export,name  = "optical";
+		    gpio-export,input;
+		};
+		IO_1 {
+		    gpios = <&gpio_tr 0 0>;
+		    gpio-export,name  = "io1";
+		    gpio-export,direction,may,change;
+		};
+		IO_2 {
+		    gpios = <&gpio_tr 1 0>;
+		    gpio-export,name  = "io2";
+		    gpio-export,direction,may,change;
+		};
+		IO_3 {
+		    gpios = <&gpio_tr 2 0>;
+		    gpio-export,name  = "io3";
+		    gpio-export,direction,may,change;
+		};
+		IO_4 {
+		    gpios = <&gpio_tr 3 0>;
+		    gpio-export,name  = "io4";
+		    gpio-export,direction,may,change;
+		};
+		IO_5 {
+		    gpios = <&gpio_tr 4 0>;
+		    gpio-export,name  = "io5";
+		    gpio-export,direction,may,change;
+		};
+		IO_6 {
+		    gpios = <&gpio_tr 5 0>;
+		    gpio-export,name  = "io6";
+		    gpio-export,direction,may,change;
+		};
+		IO_7 {
+		    gpios = <&gpio_tr 6 0>;
+		    gpio-export,name  = "io7";
+		    gpio-export,direction,may,change;
+		};
 	};
 	gpio-keys-polled {
-		compatible = "gpio-keys";
+		compatible = "gpio-keys-polled";
 		#address-cells = <1>;
 		#size-cells = <0>;
 		poll-interval = <20>;
 		reset {
 			label = "reset";
-			gpios = <&gpio0 17 0>;
+			gpios = <&gpio0 17 1>;
 			linux,code = <0x198>;
 		};
 	};
 	gpio-leds {
 		compatible = "gpio-leds";
-		status {
+		STATUS {
 			label = "status";
-			gpios = <&gpio1 2 0>;
+			gpios = <&gpio1 5 1>;
 		};
-		connect_green {
+		CONNECT_GREEN {
 			label = "connect:green";
-			gpios = <&gpio1 0 0>;
-		};
-		connect_red {
-			label = "connect:red";
 			gpios = <&gpio1 4 0>;
 		};
-		signal_green {
+		CONNECT_RED {
+			label = "connect:red";
+			gpios = <&gpio1 0 0>;
+		};
+		SIGNAL_GREEN {
 			label = "signal:green";
 			gpios = <&gpio1 1 0>;
 		};
-		signal_red {
+		SIGNAL_RED {
 			label = "signal:red";
 			gpios = <&gpio1 2 0>;
 		};
-		wlan {
+		WLAN {
 			label = "wlan";
-			gpios = <&gpio3 0 0>;
+			gpios = <&gpio3 0 1>;
 		};
 	};
 	ehci@101c0000 {
@@ -175,4 +295,7 @@
 	sdhci@10130000 {
 		status = "okay";
 	};
+
+
+
 };
