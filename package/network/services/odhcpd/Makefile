@@ -13,7 +13,7 @@ PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=git://github.com/openwrt/odhcpd.git
+PKG_SOURCE_URL:=git://git.openwrt.org/project/odhcpd.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=5f425ed1e5f92397e27ec4f44820b6ef677b8134
 
