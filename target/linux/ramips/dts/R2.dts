@@ -132,7 +132,7 @@
 		spi-max-frequency = <10000>;
 	    };
 	};
-
+/*
 	gpio_tr: gpio-tr@0 {
 	    compatible = "gpio-tr";
 	    #address-cells = <1>;
@@ -174,7 +174,7 @@
 		input_pin	= <&gpio2  25 0x0>;
 	    };
 	};
-
+*/
 	gpio {
 		compatible = "gpio-export";
 		GSM_POWER {
@@ -207,6 +207,7 @@
 		    gpio-export,name  = "optical";
 		    gpio-export,input;
 		};
+/*
 		IO_1 {
 		    gpios = <&gpio_tr 0 0>;
 		    gpio-export,name  = "io1";
@@ -242,6 +243,7 @@
 		    gpio-export,name  = "io7";
 		    gpio-export,direction,may,change;
 		};
+*/
 	};
 	gpio-keys-polled {
 		compatible = "gpio-keys-polled";
