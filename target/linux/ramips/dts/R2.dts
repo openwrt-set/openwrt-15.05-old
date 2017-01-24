@@ -91,7 +91,7 @@
 
 		port@4 {
 			status = "okay";
-			phy-mode = "disabled";
+			phy-mode = "ephy";
 			phy-handle = <&phy4>;
 		};
 
@@ -106,7 +106,7 @@
 	};
 
 	gsw@10110000 {
-		ralink,port4 = "disabled";
+		ralink,port4 = "ephy";
 	};
 
 	pcie@10140000 {
@@ -175,6 +175,11 @@
 	    };
 	};
 */
+	pps {
+		compatible = "pps-gpio";
+        gpios = <&gpio1 8 0>;
+        assert-falling-edge;
+	};
 	gpio {
 		compatible = "gpio-export";
 		GSM_POWER {
