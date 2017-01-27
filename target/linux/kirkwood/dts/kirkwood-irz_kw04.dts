@@ -109,6 +109,10 @@
 				marvell,pins = "mpp28";
 				marvell,function = "gpio";
 			};
+			pmx_scl_i2c1: pmx-scl-i2c1 {
+				marvell,pins = "mpp29";
+				marvell,function = "gpio";
+			};
 			pmx_gpio_phy_int: pmx-phy-int {
 				marvell,pins = "mpp45";
 				marvell,function = "gpio";
@@ -129,6 +133,15 @@
 		wdt@20300 {
 			status = "enabled";
 		};
+	};
+
+	i2c_gpio: i2c@0 {
+		compatible = "i2c-gpio";
+		gpios = <&gpio0 28 0
+				&gpio0 29 0 >;
+		i2c-gpio,delay-us = <2>;
+		#address-cells = <1>;
+		#size-cells = <0>;
 	};
 
 	gpio_lv: gpio-lv@0{
