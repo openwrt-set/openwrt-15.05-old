@@ -59,7 +59,7 @@
 	pinctrl {
 		state_default: pinctrl0 {
 			gpio {
-				ralink,group = "rgmii1", "rgmii2", "uartf", "pcie", "wled";
+				ralink,group = "rgmii1", "rgmii2", "uartf", "pcie", "wled", "nd_sd";
 				ralink,function = "gpio";
 			};
 		};
@@ -117,6 +117,12 @@
 		    gpios = <&gpio1 1 0>;
 		    gpio-export,name  = "gsm:reset";
 		    gpio-export,output = <0>;
+		};
+
+		ND_CS_N {
+		   gpios = <&gpio2 5 0>;
+		   gpio-export,name = "sim:select";
+		   gpio-export,output = <0>;
 		};
 
 		USB_DET {
