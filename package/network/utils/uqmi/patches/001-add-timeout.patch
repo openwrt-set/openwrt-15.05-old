@@ -1,0 +1,84 @@
+diff --git a/dev.c b/dev.c
+index 4bca429..0a17cdf 100644
+--- a/dev.c
++++ b/dev.c
+@@ -200,11 +200,16 @@ void qmi_request_cancel(struct qmi_dev *qmi, struct qmi_request *req)
+ 	__qmi_request_complete(qmi, req, NULL);
+ }
+ 
++static void __tm_cb(struct uloop_timeout *t) {
++	uloop_cancelled = true;
++	cancel_all_requests = true;
++}
++
+ int qmi_request_wait(struct qmi_dev *qmi, struct qmi_request *req)
+ {
+ 	bool complete = false;
+ 	bool cancelled;
+-
++	struct uloop_timeout timeout;
+ 	if (!req->pending)
+ 		return req->ret;
+ 
+@@ -212,11 +217,21 @@ int qmi_request_wait(struct qmi_dev *qmi, struct qmi_request *req)
+ 		*req->complete = true;
+ 
+ 	req->complete = &complete;
++	
+ 	while (!complete) {
+ 		cancelled = uloop_cancelled;
+ 		uloop_cancelled = false;
++
++		timeout.pending = false;
++		timeout.cb = __tm_cb;
++		if( qmi->timeout > 0 )
++		    uloop_timeout_set(&(timeout), qmi->timeout);
++
+ 		uloop_run();
+ 
++		if( qmi->timeout > 0 )
++		    uloop_timeout_cancel(&(timeout));
++
+ 		if (cancel_all_requests)
+ 			qmi_request_cancel(qmi, req);
+ 
+diff --git a/main.c b/main.c
+index 9b43e5e..767aa0f 100644
+--- a/main.c
++++ b/main.c
+@@ -108,11 +108,12 @@ int main(int argc, char **argv)
+ 	static struct qmi_dev dev;
+ 	int ch, ret;
+ 
++	dev.timeout = -1;
+ 	uloop_init();
+ 	signal(SIGINT, handle_exit_signal);
+ 	signal(SIGTERM, handle_exit_signal);
+ 
+-	while ((ch = getopt_long(argc, argv, "d:k:sm", uqmi_getopt, NULL)) != -1) {
++	while ((ch = getopt_long(argc, argv, "d:k:t:sm", uqmi_getopt, NULL)) != -1) {
+ 		int cmd_opt = CMD_OPT(ch);
+ 
+ 		if (ch < 0 && cmd_opt >= 0 && cmd_opt < __UQMI_COMMAND_LAST) {
+@@ -136,6 +137,9 @@ int main(int argc, char **argv)
+ 		case 'm':
+ 			dev.is_mbim = true;
+ 			break;
++		case 't':
++			dev.timeout = atoi(optarg);
++			break;
+ 		default:
+ 			return usage(argv[0]);
+ 		}
+diff --git a/uqmi.h b/uqmi.h
+index dd88151..57135b5 100644
+--- a/uqmi.h
++++ b/uqmi.h
+@@ -90,6 +90,7 @@ struct qmi_dev {
+ 	void *buf;
+ 
+ 	bool is_mbim;
++	int timeout;
+ };
+ 
+ struct qmi_request {
