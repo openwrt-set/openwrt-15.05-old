@@ -7,6 +7,14 @@
 	model = "R2 board";
 
 	palmbus@10000000 {
+		i2c@900 {
+			status = "okay";
+			rtc@51 {
+				compatible = "nxp,pcf85063";
+				reg = <0x51>;
+			};
+		};
+
 		spi@b00 {
 			status = "okay";
 
@@ -42,6 +50,9 @@
 				};
 			};
 		};
+
+
+
 		uart@500 {
 		    status = "okay";
 		    pinctrl-names = "default";
@@ -104,6 +115,8 @@
 			};
 		};
 	};
+
+
 
 	gsw@10110000 {
 		ralink,port4 = "ephy";
@@ -302,7 +315,5 @@
 	sdhci@10130000 {
 		status = "okay";
 	};
-
-
-
 };
+
