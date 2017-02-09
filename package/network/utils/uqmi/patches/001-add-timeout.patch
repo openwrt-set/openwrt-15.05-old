@@ -43,10 +43,26 @@ index 4bca429..0a17cdf 100644
  			qmi_request_cancel(qmi, req);
  
 diff --git a/main.c b/main.c
-index 9b43e5e..767aa0f 100644
+index 9b43e5e..f23f3b4 100644
 --- a/main.c
 +++ b/main.c
-@@ -108,11 +108,12 @@ int main(int argc, char **argv)
+@@ -44,6 +44,7 @@ static const struct option uqmi_getopt[] = {
+ 	{ "keep-client-id", required_argument, NULL, 'k' },
+ 	{ "release-client-id", required_argument, NULL, 'r' },
+ 	{ "mbim",  no_argument, NULL, 'm' },
++	{ "timeout",  required_argument, NULL, 't' },
+ 	{ NULL, 0, NULL, 0 }
+ };
+ #undef __uqmi_command
+@@ -57,6 +58,7 @@ static int usage(const char *progname)
+ 		"  --keep-client-id <name>:          Keep Client ID for service <name>\n"
+ 		"  --release-client-id <name>:       Release Client ID after exiting\n"
+ 		"  --mbim, -m                        NAME is an MBIM device with EXT_QMUX support\n"
++		"  --timeout, -t                     Timeout in milliseconds\n"
+ 		"\n"
+ 		"Services:                           dms, nas, pds, wds, wms\n"
+ 		"\n"
+@@ -108,11 +110,12 @@ int main(int argc, char **argv)
  	static struct qmi_dev dev;
  	int ch, ret;
  
@@ -60,7 +76,7 @@ index 9b43e5e..767aa0f 100644
  		int cmd_opt = CMD_OPT(ch);
  
  		if (ch < 0 && cmd_opt >= 0 && cmd_opt < __UQMI_COMMAND_LAST) {
-@@ -136,6 +137,9 @@ int main(int argc, char **argv)
+@@ -136,6 +139,9 @@ int main(int argc, char **argv)
  		case 'm':
  			dev.is_mbim = true;
  			break;
