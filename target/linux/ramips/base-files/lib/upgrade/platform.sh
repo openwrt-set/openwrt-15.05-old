@@ -221,6 +221,28 @@ platform_do_upgrade() {
 	esac
 }
 
+platform_copy_config() {
+	local board=$(ramips_board_name)
+	local TAR_V
+
+	[ "$VERBOSE" -gt 1 ] && TAR_V="v" || TAR_V=""
+	case "$board" in
+		irz_ra01)
+			mkdir /overlay/ 2> /dev/null
+			mount -t jffs2 /dev/mtdblock6 /overlay
+			mount -o remount,rw -t jffs2 /dev/mtdblock6 /overlay
+			rm -rf /overlay/*
+			mkdir -p /overlay/upper/
+			echo "*** $CONF_TAR"
+			tar -zx${TAR_V}f "$CONF_TAR" -C /overlay/upper/
+			sync
+			umount /dev/mtdblock6
+		;;
+		*)
+		;;
+	esac
+}
+
 irz_do_upgrade() {
     local tar_file="$1"
     local board_name="$(cat /tmp/sysinfo/board_name)"
