@@ -226,7 +226,7 @@ irz_do_upgrade() {
     local board_name="$(cat /tmp/sysinfo/board_name)"
     local firmware_mtd="$(find_mtd_index firmware)"
 
-    local firmware_length=`$(tar xf $tar_file sysupgrade-$board_name/firmware -O | wc -c 2> /dev/null)`
+    local firmware_length="$(tar xf $tar_file sysupgrade-$board_name/firmware -O | wc -c 2> /dev/null)"
     # write kernel if exist
     [ "$firmware_length" = 0 -o -z "$firmware_mtd" -o "$firmware_length" -gt "$(cat /sys/class/mtd/mtd${firmware_mtd}/size)" ] || {
 	sync
