@@ -18,7 +18,9 @@ define Profile/IRZ_KW04
 	kmod-usb-serial-pl2303 kmod-usb-serial-pl2303 \
 	kmod-usb-serial-qualcomm kmod-usb-serial-sierrawireless \
 	kmod-usb-storage kmod-usb-serial kmod-maxim59xx \
-	kmod-i2c-core kmod-i2c-algo-bit kmod-i2c-gpio
+	kmod-i2c-core kmod-i2c-algo-bit kmod-i2c-gpio \
+	kmod-w1 kmod-w1-gpio-custom kmod-w1-master-gpio \
+	kmod-w1-slave-therm
 endef
 
 define Profile/IRZ_KW04/Description

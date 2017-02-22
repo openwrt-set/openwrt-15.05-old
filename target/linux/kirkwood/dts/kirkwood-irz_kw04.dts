@@ -135,6 +135,12 @@
 		};
 	};
 
+	onewire: onewire@0 {
+		compatible = "w1-gpio";
+		pinctrl-0 = <&pmx_gpio_cpu3>;
+		gpios = <&gpio1 5 0>;
+	};
+
 	i2c_gpio: i2c@0 {
 		compatible = "i2c-gpio";
 		gpios = <&gpio0 28 0
@@ -169,7 +175,7 @@
 	gpio {
 		compatible = "gpio-export";
 		pinctrl-0 = < &pmx_usb_power &pmx_m0_reset &pmx_m1_reset
-						&pmx_sim_select &pmx_rede &pmx_gpio_cpu3 >;
+						&pmx_sim_select &pmx_rede >;
 		pinctrl-names = "default";
 		USB_POWER {
 			gpios = <&gpio1 16 0>;
@@ -220,10 +226,6 @@
 		POE_EN {
 			gpios = <&msp_ex 33 0>;
 			gpio-export,name = "POE_EN";
-			gpio-export,output=<1>;
-		};
-		MC{
-			gpios = <&gpio1 5 0>;
 			gpio-export,output=<1>;
 		};
 	};
