@@ -128,6 +128,7 @@ static int gpio_tr_probe(struct platform_device *pdev)
 	struct device_node *child;
 	struct gpio_tr_pin* pins;
 	struct gpio_tr* chip;
+	char**	names;
 	
 	int i, ret;
 
@@ -136,7 +137,7 @@ static int gpio_tr_probe(struct platform_device *pdev)
 	    return -EINVAL;
 	}
 	
-    chip = devm_kzalloc(dev, sizeof( struct gpio_tr ), GFP_KERNEL);
+	chip = devm_kzalloc(dev, sizeof( struct gpio_tr ), GFP_KERNEL);
 	
 	if( !chip ){
 		dev_err(dev,"failed to allocate lv_chip struct\n");
@@ -158,7 +159,12 @@ static int gpio_tr_probe(struct platform_device *pdev)
 	    dev_err(dev,"failed to allocate pins struct\n");
 	    return -ENOMEM;
 	}
-	
+	names 		= devm_kzalloc(dev, sizeof(char*) * pdata->npins, GFP_KERNEL);
+
+	if( !names ){
+	    dev_err(dev,"failed to allocate names array\n");
+	    return -ENOMEM;
+	}
 	/* set handlers for gpio operations*/
 	chip->chip.direction_input	= gpio_tr_dir_input;
 	chip->chip.direction_output	= gpio_tr_dir_output;
@@ -169,16 +175,18 @@ static int gpio_tr_probe(struct platform_device *pdev)
 	chip->chip.request		= gpio_tr_request;
 	chip->chip.free			= gpio_tr_free;
 	
+
 	/* initialize undelying gpios to begin state */
 	i = 0;
 	
 	for_each_child_of_node(root,child) {
 	    struct gpio_tr_pin* pin = &(pins[i]);
-	    
+	    char* name = NULL;
 	    /*Get pin info from device tree record*/
 		pin->input_pin  = of_get_named_gpio_flags(child, "input_pin", 0, &(pins->input_flags));
 		pin->high_pin  	= of_get_named_gpio_flags(child, "high_pin", 0, &(pins->high_flags));
 		pin->low_pin	= of_get_named_gpio_flags(child, "low_pin", 0, &(pins->low_flags));
+		of_property_read_string( child, "name", &name);
 
 		/* Initialize and check pins */
 		if( gpio_is_valid(pin->input_pin) == false ){
@@ -197,7 +205,7 @@ static int gpio_tr_probe(struct platform_device *pdev)
 			}
 			dev_err(dev, "High level pin(%d) in %d pin not valid",pin->high_pin, i);
 			return -EINVAL;
-	    }
+		}
 		
 		if( gpio_is_valid(pin->low_pin) == false ){
 			if ( ! deffered ) {
@@ -206,13 +214,15 @@ static int gpio_tr_probe(struct platform_device *pdev)
 			}
 			dev_err(dev, "Low level pin(%d) in %d pin not valid",pin->low_pin, i);
 			return -EINVAL;
-	    }
-		dev_info( dev, "gpio-tr pin %d, input(%d) high(%d) low(%d)", i, pin->input_pin, pin->high_pin, pin->low_pin );
+		}
+		names[i] = name;
+		dev_info( dev, "gpio-tr pin %d(%s), input(%d) high(%d) low(%d)", i,name ? name : "noname", pin->input_pin, pin->high_pin, pin->low_pin );
 		i++;
 	}
 	
 	pdata->pins = pins;
 	chip->chip.ngpio = pdata->npins;
+	chip->chip.names 	= names;
 	chip->chip.can_sleep = 1;
 	chip->chip.owner	= THIS_MODULE;
 	chip->chip.base = -1; /* this is "virtual" gpio chip, so we aren't need to set base num explicitly.*/
