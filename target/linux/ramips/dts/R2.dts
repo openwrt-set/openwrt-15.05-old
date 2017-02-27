@@ -5,7 +5,9 @@
 / {
 	compatible = "ralink,irz_mt02", "ralink,mt7620a-soc";
 	model = "R2 board";
-
+	chosen {
+	    bootargs = "";
+	};
 	palmbus@10000000 {
 		i2c@900 {
 			status = "okay";
@@ -145,7 +147,7 @@
 		spi-max-frequency = <10000>;
 	    };
 	};
-/*
+
 	gpio_tr: gpio-tr@0 {
 	    compatible = "gpio-tr";
 	    #address-cells = <1>;
@@ -154,50 +156,55 @@
 	    io1 {
 		low_pin		= <&gpiosh 1  0x0>;
 		high_pin	= <&gpiosh 9  0x0>;
-		input_pin	= <&gpio2  31 0x0>;
+		input_pin	= <&gpio2  31 0x1>;
 	    };
 	    io2 {
 		low_pin		= <&gpiosh 2  0x0>;
 		high_pin	= <&gpiosh 10 0x0>;
-		input_pin	= <&gpio2  30 0x0>;
+		input_pin	= <&gpio2  30 0x1>;
 	    };
 	    io3 {
 		low_pin		= <&gpiosh 3  0x0>;
 		high_pin	= <&gpiosh 11 0x0>;
-		input_pin	= <&gpio2  29 0x0>;
+		input_pin	= <&gpio2  26 0x1>;
 	    };
 	    io4 {
 		low_pin		= <&gpiosh 4  0x0>;
 		high_pin	= <&gpiosh 12 0x0>;
-		input_pin	= <&gpio2  28 0x0>;
+		input_pin	= <&gpio2  27 0x1>;
 	    };
 	    io5 {
 		low_pin		= <&gpiosh 5  0x0>;
 		high_pin	= <&gpiosh 13 0x0>;
-		input_pin	= <&gpio2  27 0x0>;
+		input_pin	= <&gpio2  28 0x1>;
 	    };
 	    io6 {
 		low_pin		= <&gpiosh 6  0x0>;
 		high_pin	= <&gpiosh 14 0x0>;
-		input_pin	= <&gpio2  26 0x0>;
+		input_pin	= <&gpio2  29 0x1>;
 	    };
 	    io7 {
 		low_pin		= <&gpiosh 7  0x0>;
 		high_pin	= <&gpiosh 15 0x0>;
-		input_pin	= <&gpio2  25 0x0>;
+		input_pin	= <&gpio2  25 0x1>;
 	    };
 	};
-*/
+
 	pps {
 		compatible = "pps-gpio";
-        gpios = <&gpio1 8 0>;
-        assert-falling-edge;
+		gpios = <&gpio1 8 0>;
+		assert-falling-edge;
 	};
 	gpio {
 		compatible = "gpio-export";
 		GSM_POWER {
 		    gpios = <&gpio0 0 1>;
 		    gpio-export,name  = "gsm:power";
+		    gpio-export,output = <1>;
+		};
+		GSM2_POWER {
+		    gpios = <&gpio1 6 1>;
+		    gpio-export,name  = "gsm2:power";
 		    gpio-export,output = <1>;
 		};
 		GPS_RESET {
@@ -211,57 +218,20 @@
 		    gpio-export,output = <1>;
 		};
 		RS485_ENABLE {
-		    gpios = <&gpio1 10 1>;
+		    gpios = <&gpio1 11 0>;
 		    gpio-export,name  = "rs485:enable";
 		    gpio-export,output = <1>;
 		};
 		sim_switch {
-		    gpios = <&gpio2 5 0>;
+		    gpios = <&gpio1 3 0>;
 		    gpio-export,name  = "sim:switch";
 		    gpio-export,output = <1>;
 		};
 		OPTO_IN {
-		    gpios = <&gpio2 6 0>;
+		    gpios = <&gpio1 10 1>;
 		    gpio-export,name  = "optical";
 		    gpio-export,input;
 		};
-/*
-		IO_1 {
-		    gpios = <&gpio_tr 0 0>;
-		    gpio-export,name  = "io1";
-		    gpio-export,direction,may,change;
-		};
-		IO_2 {
-		    gpios = <&gpio_tr 1 0>;
-		    gpio-export,name  = "io2";
-		    gpio-export,direction,may,change;
-		};
-		IO_3 {
-		    gpios = <&gpio_tr 2 0>;
-		    gpio-export,name  = "io3";
-		    gpio-export,direction,may,change;
-		};
-		IO_4 {
-		    gpios = <&gpio_tr 3 0>;
-		    gpio-export,name  = "io4";
-		    gpio-export,direction,may,change;
-		};
-		IO_5 {
-		    gpios = <&gpio_tr 4 0>;
-		    gpio-export,name  = "io5";
-		    gpio-export,direction,may,change;
-		};
-		IO_6 {
-		    gpios = <&gpio_tr 5 0>;
-		    gpio-export,name  = "io6";
-		    gpio-export,direction,may,change;
-		};
-		IO_7 {
-		    gpios = <&gpio_tr 6 0>;
-		    gpio-export,name  = "io7";
-		    gpio-export,direction,may,change;
-		};
-*/
 	};
 	gpio-keys-polled {
 		compatible = "gpio-keys-polled";
