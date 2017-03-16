@@ -218,7 +218,7 @@
 		    gpio-export,output = <1>;
 		};
 		RS485_ENABLE {
-		    gpios = <&gpio1 11 0>;
+		    gpios = <&gpio1 11 1>;
 		    gpio-export,name  = "rs485:enable";
 		    gpio-export,output = <1>;
 		};
@@ -231,6 +231,11 @@
 		    gpios = <&gpio1 10 1>;
 		    gpio-export,name  = "optical";
 		    gpio-export,input;
+		};
+		GSM2_ENABLE {
+		    gpios = <&gpio2 5 0 >;
+		    gpio-export,name  = "gsm2:enable";
+		    gpio-export,direction_may_change;
 		};
 	};
 	gpio-keys-polled {
