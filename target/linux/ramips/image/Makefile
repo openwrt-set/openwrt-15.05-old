@@ -982,11 +982,23 @@ define BuildFirmware/R2/squashfs
 	$(call Image/Build/SysupgradeTAR,$(2),$(1),$(KDIR)/vmlinux-$(2).uImage)
 endef
 
+define BuildFirmware/RX/squashfs
+	$(call BuildFirmware/R2/squashfs,$(1))
+	$(call BuildFirmware/R0/squashfs,$(1))
+endef
+
+define BuildFirmware/RX/initramfs
+	$(call BuildFirmware/R2/initramfs,$(1), irz_mt02)
+	$(call BuildFirmware/R0/initramfs,$(1), irz_mt00)
+endef
+
 BuildFirmware/R0/initramfs=$(call BuildFirmware/CustomFlash/$(1),$(1),irz_mt00,R0,12255232)
 Image/Build/Profile/R0=$(call BuildFirmware/R0/$(1),$(1),irz_mt00,R0)
 
 BuildFirmware/R2/initramfs=$(call BuildFirmware/CustomFlash/$(1),$(1),irz_mt02,R2,12255232)
 Image/Build/Profile/R2=$(call BuildFirmware/R2/$(1),$(1),irz_mt02,R2)
+
+Image/Build/Profile/RX=$(call BuildFirmware/RX/$(1),$(1))
 
 ifeq ($(SUBTARGET),mt7620)
 define Image/Build/Profile/Default
@@ -1023,6 +1035,7 @@ define Image/Build/Profile/Default
 	$(call Image/Build/Profile/RX15,$(1))
 	$(call Image/Build/Profile/R0,$(1))
 	$(call Image/Build/Profile/R2,$(1))
+	$(call Image/Build/Profile/RX,$(1))
 endef
 endif
 

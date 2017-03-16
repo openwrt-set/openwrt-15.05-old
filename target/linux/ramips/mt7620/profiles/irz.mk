@@ -6,13 +6,18 @@
 #
 
 define Profile/R0
-	NAME:=R0 board
+	NAME:=irz_mt00 board
 endef
 
 define Profile/R2
-	NAME:=R2 board
+	NAME:=irz_mt02 board
+	DEPENDS:= +kmod-rtc-pcf85063 +kmod-sdhci-mt7620
 endef
 
+define Profile/RX
+	NAME:="irz_mtxx boards composite profile"
+endef
 
 $(eval $(call Profile,R0))
 $(eval $(call Profile,R2))
+$(eval $(call Profile,RX))
