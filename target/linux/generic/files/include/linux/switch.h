@@ -173,6 +173,18 @@ struct switch_attr {
 	int max;
 };
 
+struct switch_link_event {
+	u8 port;
+	u16 link;
+	u16 duplex;
+	u16 speed;
+	struct switch_dev *dev;
+	struct sk_buff *skb;
+	struct work_struct work;
+};
+
+int switch_create_link_event(struct switch_dev *dev, u8 port, u16 link, u16 duplex, u16 speed);
+
 int switch_generic_set_link(struct switch_dev *dev, int port,
 			    struct switch_port_link *link);
 

@@ -1714,117 +1714,6 @@ static const struct switch_dev_ops mvsw61xx_ops = {
 
 /* end swconfig stuff */
 
-static int mv_event_add_var(struct mv_link_event *event, int argv,
-                const char *format, ...)
-{
-	static char buf[128];
-	char *s;
-	va_list args;
-	int len;
-
-	if (argv)
-		return 0;
-
-	va_start(args, format);
-	len = vsnprintf(buf, sizeof(buf), format, args);
-	va_end(args);
-
-	if (len >= sizeof(buf)) {
-		return -ENOMEM;
-	}
-
-	s = skb_put(event->skb, len + 1);
-	strcpy(s, buf);
-
-	return 0;
-}
-
-static int mvsw61xx_fill_link_event(struct mv_link_event* evt) {
-	int ret;
-
-	ret = mv_event_add_var(evt,0,"HOME=%s","/");
-	if( ret ) return ret;
-	
-	ret = mv_event_add_var(evt,0,"PATH=%s","/sbin:/bin:/usr/sbin:/usr/bin");
-	if( ret ) return ret;
-	
-	ret = mv_event_add_var(evt,0,"SUBSYSTEM=%s","switch");
-	if( ret ) return ret;
-	
-	ret = mv_event_add_var(evt,0,"ACTION=%s",evt->link ? "up" : "down");
-	if( ret ) return ret;
-	
-	ret = mv_event_add_var(evt,0,"PORT=%d",evt->port);
-	if( ret ) return ret;
-
-	switch(evt->speed) {
-		case MV_PORT_STATUS_SPEED_10:
-			ret = mv_event_add_var(evt,0,"SPEED=%s","10");
-			break;
-		case MV_PORT_STATUS_SPEED_100:
-			ret = mv_event_add_var(evt,0,"SPEED=%s","10");
-			break;
-		case MV_PORT_STATUS_SPEED_1000:
-			ret = mv_event_add_var(evt,0,"SPEED=%s","1000");
-			break;
-	}
-	if( ret ) return ret;
-	if( evt->duplex) {
-		ret = mv_event_add_var(evt,0,"DUPLEX=%s","full");
-	} else {
-		ret = mv_event_add_var(evt,0,"DUPLEX=%s","half");
-	}
-	ret = mv_event_add_var(evt,0,"SEQNUM=%llu", uevent_next_seqnum());
-
-	return ret;
-}
-
-static void mvsw61xx_link_event_work(struct work_struct *ugly) {
-	struct mv_link_event* evt;
-	int ret = 0;
-
-	evt = container_of(ugly, struct mv_link_event, work);
-
-	evt->skb = alloc_skb(2048, GFP_KERNEL);
-
-	if(!evt->skb)
-		goto free_evt;
-	
-	ret = mv_event_add_var(evt,0,"%s@","switch");
-	if( ret ) goto out_free_skb;
-	
-	ret = mvsw61xx_fill_link_event(evt);
-	if( ret ) goto out_free_skb;
-
-	NETLINK_CB(evt->skb).dst_group = 1;
-	broadcast_uevent(evt->skb, 0, 1, GFP_KERNEL);
-out_free_skb:
-	if (ret) {
-		kfree_skb(evt->skb);
-	}
-
-free_evt:
-	kfree(evt);
-}
-
-static int mvsw61xx_create_link_event(u8 port, u16 link, u16 duplex, u16 speed) {
-	struct mv_link_event* evt;
-
-	evt = kzalloc(sizeof(struct mv_link_event), GFP_KERNEL);
-
-	if(!evt) 
-		return -ENOMEM;
-
-	evt->port = port;
-	evt->link = link;
-	evt->duplex = duplex;
-	evt->speed = speed;
-
-	INIT_WORK(&evt->work,(void*)mvsw61xx_link_event_work);
-	schedule_work(&evt->work);
-	return 0;
-}
-
 static void mvsw61xx_link_poll_work(struct work_struct *ugly) {
 	struct mvsw61xx_state *state;
 	int i;
@@ -1836,12 +1725,23 @@ static void mvsw61xx_link_poll_work(struct work_struct *ugly) {
 		u16 link, speed, duplex;
 		link = status & MV_PORT_STATUS_LINK;
 		speed = (status & MV_PORT_STATUS_SPEED_MASK) >> MV_PORT_STATUS_SPEED_SHIFT;
+		switch (speed) {
+		    case MV_PORT_STATUS_SPEED_10:
+			speed = SWITCH_PORT_SPEED_10;
+			break;
+		    case MV_PORT_STATUS_SPEED_100:
+			speed = SWITCH_PORT_SPEED_100;
+			break;
+		    case MV_PORT_STATUS_SPEED_1000:
+			speed = SWITCH_PORT_SPEED_1000;
+		    break;
+		}
 		duplex = status & MV_PORT_STATUS_FDX;
 		if( state->ports[i].link_status != link ) {
 			printk(KERN_DEBUG "Link changed. Port: %d, link: 0x%X/0x%X\n", i, link, state->ports[i].link_status);
 			//make hotplug event
 			state->ports[i].link_status = link;
-			mvsw61xx_create_link_event(i, link, duplex, speed);
+			switch_create_link_event(&state->dev, i, link, duplex, speed);
 		}
 	}
 	state->link_poll_timer.expires = round_jiffies(jiffies + HZ);

@@ -34,6 +34,8 @@
 MODULE_AUTHOR("Felix Fietkau <nbd@openwrt.org>");
 MODULE_LICENSE("GPL");
 
+extern u64 uevent_next_seqnum(void);
+
 static int swdev_id;
 static struct list_head swdevs;
 static DEFINE_SPINLOCK(swdevs_lock);
@@ -175,6 +177,120 @@ swconfig_reset_switch(struct switch_dev *dev, const struct switch_attr *attr,
 
 	return dev->ops->reset_switch(dev);
 }
+
+static int switch_event_add_var(struct switch_link_event *event, int argv,
+                const char *format, ...)
+{
+	static char buf[128];
+	char *s;
+	va_list args;
+	int len;
+
+	if (argv)
+		return 0;
+
+	va_start(args, format);
+	len = vsnprintf(buf, sizeof(buf), format, args);
+	va_end(args);
+
+	if (len >= sizeof(buf)) {
+		return -ENOMEM;
+	}
+
+	s = skb_put(event->skb, len + 1);
+	strcpy(s, buf);
+
+	return 0;
+}
+
+static int switch_fill_link_event(struct switch_link_event* evt) {
+	int ret;
+
+	ret = switch_event_add_var(evt,0,"HOME=%s","/");
+	if( ret ) return ret;
+	
+	ret = switch_event_add_var(evt,0,"PATH=%s","/sbin:/bin:/usr/sbin:/usr/bin");
+	if( ret ) return ret;
+	
+	ret = switch_event_add_var(evt,0,"SUBSYSTEM=%s","switch");
+	if( ret ) return ret;
+	
+	ret = switch_event_add_var(evt,0,"ACTION=%s",evt->link ? "up" : "down");
+	if( ret ) return ret;
+	
+	ret = switch_event_add_var(evt,0,"PORT=%d",evt->port);
+	if( ret ) return ret;
+
+	switch(evt->speed) {
+		case SWITCH_PORT_SPEED_10:
+			ret = switch_event_add_var(evt,0,"SPEED=%s","10");
+			break;
+		case SWITCH_PORT_SPEED_100:
+			ret = switch_event_add_var(evt,0,"SPEED=%s","100");
+			break;
+		case SWITCH_PORT_SPEED_1000:
+			ret = switch_event_add_var(evt,0,"SPEED=%s","1000");
+			break;
+	}
+	if( ret ) return ret;
+	if( evt->duplex) {
+		ret = switch_event_add_var(evt,0,"DUPLEX=%s","full");
+	} else {
+		ret = switch_event_add_var(evt,0,"DUPLEX=%s","half");
+	}
+	ret = switch_event_add_var(evt,0,"SEQNUM=%llu", uevent_next_seqnum());
+
+	return ret;
+}
+
+
+static void switch_link_event_work(struct work_struct *ugly) {
+	struct switch_link_event* evt;
+	int ret = 0;
+
+	evt = container_of(ugly, struct switch_link_event, work);
+
+	evt->skb = alloc_skb(2048, GFP_KERNEL);
+
+	if(!evt->skb)
+		goto free_evt;
+	
+	ret = switch_event_add_var(evt,0,"DEVICENAME=%s",evt->dev->name);
+	if( ret ) goto out_free_skb;
+	
+	ret = switch_fill_link_event(evt);
+	if( ret ) goto out_free_skb;
+
+	NETLINK_CB(evt->skb).dst_group = 1;
+	broadcast_uevent(evt->skb, 0, 1, GFP_KERNEL);
+out_free_skb:
+	if (ret) {
+		kfree_skb(evt->skb);
+	}
+
+free_evt:
+	kfree(evt);
+}
+
+int switch_create_link_event(struct switch_dev *dev, u8 port, u16 link, u16 duplex, u16 speed) {
+	struct switch_link_event* evt;
+
+	evt = kzalloc(sizeof(struct switch_link_event), GFP_KERNEL);
+
+	if(!evt)
+		return -ENOMEM;
+
+	evt->dev = dev;
+	evt->port = port;
+	evt->link = link;
+	evt->duplex = duplex;
+	evt->speed = speed;
+
+	INIT_WORK(&evt->work,(void*)switch_link_event_work);
+	schedule_work(&evt->work);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(switch_create_link_event)
 
 enum global_defaults {
 	GLOBAL_APPLY,

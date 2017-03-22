@@ -757,6 +757,7 @@ mt7530_probe(struct device *dev, void __iomem *base, struct mii_bus *bus, int vl
 		return ret;
 	}
 
+	dev->platform_data = swdev;
 
 	map = mt7530_find_mapping(dev->of_node);
 	if (map)

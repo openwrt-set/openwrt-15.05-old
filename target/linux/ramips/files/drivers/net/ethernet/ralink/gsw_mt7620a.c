@@ -110,6 +110,8 @@
 #define PHY_PRE_EN		BIT(30)
 #define PMY_MDC_CONF(_x)	((_x & 0x3f) << 24)
 
+extern u64 uevent_next_seqnum(void);
+
 enum {
 	/* Global attributes. */
 	GSW_ATTR_ENABLE_VLAN,
@@ -270,14 +272,33 @@ static void mt7620a_handle_carrier(struct fe_priv *priv)
 		netif_carrier_off(priv->netdev);
 }
 
+static int toswdev_speed(int speed) {
+	switch (speed) {
+	case 2:
+	case SPEED_1000:
+		return SWITCH_PORT_SPEED_1000;
+	case 1:
+	case SPEED_100:
+		return SWITCH_PORT_SPEED_100;
+	case 0:
+	case SPEED_10:
+		return SWITCH_PORT_SPEED_10;
+	}
+
+	return SWITCH_PORT_SPEED_UNKNOWN;
+}
+
 void mt7620_mdio_link_adjust(struct fe_priv *priv, int port)
 {
+	struct mt7620_gsw *gsw = (struct mt7620_gsw *) priv->soc->swpriv;
+	
 	if (priv->link[port])
 		netdev_info(priv->netdev, "port %d link up (%sMbps/%s duplex)\n",
 			port, fe_speed_str(priv->phy->speed[port]),
 			(DUPLEX_FULL == priv->phy->duplex[port]) ? "Full" : "Half");
 	else
 		netdev_info(priv->netdev, "port %d link down\n", port);
+	switch_create_link_event(gsw->dev->platform_data, port, priv->link[port], (DUPLEX_FULL == priv->phy->duplex[port]), toswdev_speed(priv->phy->speed[port]));
 	mt7620a_handle_carrier(priv);
 }
 
@@ -301,10 +322,13 @@ static irqreturn_t gsw_interrupt_mt7620(int irq, void *_priv)
 							(status & 0x2) ? "Full" : "Half");
 				else
 					netdev_info(priv->netdev, "port %d link down\n", i);
+				if (gsw->dev->platform_data)
+					switch_create_link_event(gsw->dev->platform_data, i, link, (status & 0x2), toswdev_speed((status >> 2) & 3));
 			}
 
 			priv->link[i] = link;
 		}
+	
 	mt7620a_handle_carrier(priv);
 
 	gsw_w32(gsw, status, GSW_REG_ISR);
@@ -330,6 +354,9 @@ static irqreturn_t gsw_interrupt_mt7621(int irq, void *_priv)
 					netdev_info(priv->netdev, "port %d link up\n", i);
 				else
 					netdev_info(priv->netdev, "port %d link down\n", i);
+
+				if (gsw->dev->platform_data)
+					switch_create_link_event(gsw->dev->platform_data, i, link, (DUPLEX_FULL == priv->phy->duplex[i]), toswdev_speed(priv->phy->speed[i]));
 			}
 		}
 
@@ -772,6 +799,8 @@ int mt7620_gsw_probe(struct fe_priv *priv)
 
 	gsw->dev = priv->device;
 	priv->soc->swpriv = gsw;
+
+	priv->device->platform_data = NULL;
 
 	of_property_read_string(np, "ralink,port4", &port4);
 	if (port4 && !strcmp(port4, "ephy"))
