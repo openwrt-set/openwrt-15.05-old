@@ -555,6 +555,47 @@ mt7530_apply_config(struct switch_dev *dev)
 }
 
 static int
+mt7530_set_port_link(struct switch_dev *dev,  int port,
+			struct switch_port_link *link)
+{
+	struct mt7530_priv *priv = container_of(dev, struct mt7530_priv, swdev);
+	u32 pmcr;
+	if (port < 0 || port >= MT7530_NUM_PORTS)
+		return -EINVAL;
+
+	pmcr = mt7530_r32(priv, 0x3000 + (0x100 * port));
+
+	if (link->aneg) {
+		pmcr &= ~(1 << 15); // enable force mode
+	} else {
+		pmcr &= ~(1 << 15); // enable force mode
+
+		if (link->duplex)
+			pmcr |= (1 << 1);
+		else 
+			pmcr &= ~(1 << 1);
+
+		pmcr &= ~(3 << 2);
+		switch (link->speed) {
+		case SWITCH_PORT_SPEED_10:
+			break;
+		case SWITCH_PORT_SPEED_100:
+			pmcr |= (1 << 2);
+			break;
+		case SWITCH_PORT_SPEED_1000:
+			pmcr |= (2 << 2);
+			break;
+		default:
+			return -ENOTSUPP;
+		}
+
+		mt7530_w32(priv, 0x3000 + (0x100 * port), pmcr);
+	}
+
+	return 0;
+}
+
+static int
 mt7530_get_port_link(struct switch_dev *dev,  int port,
 			struct switch_port_link *link)
 {
@@ -588,6 +629,44 @@ mt7530_get_port_link(struct switch_dev *dev,  int port,
 
 	return 0;
 }
+
+static int
+mt7530_get_force_link(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	struct mt7530_priv *priv = container_of(dev, struct mt7530_priv, swdev);
+	u32 pmsr;
+	u32 port = val->port_vlan;
+	if (port < 0 || port >= MT7530_NUM_PORTS)
+		return -EINVAL;
+
+	pmsr = mt7530_r32(priv, 0x3000 + (0x100 * port));
+	val->value.i = pmsr & 0x1;
+
+	return 0;
+}
+
+static int
+mt7530_set_force_link(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	struct mt7530_priv *priv = container_of(dev, struct mt7530_priv, swdev);
+	u32 pmcr;
+	u32 port = val->port_vlan;
+	if (port < 0 || port >= MT7530_NUM_PORTS)
+		return -EINVAL;
+
+	pmcr = mt7530_r32(priv, 0x3000 + (0x100 * port));
+	pmcr |= (1 << 15); // enable force mode
+	if( val->value.i )
+		pmcr |= 0x1;
+	else
+		pmcr &= ~(0x1);
+
+	mt7530_w32(priv, 0x3000 + (0x100 * port), pmcr);
+	return 0;
+}
+
 
 static const struct switch_attr mt7530_global[] = {
 	{
@@ -659,6 +738,13 @@ static const struct switch_attr mt7621_port[] = {
 };
 
 static const struct switch_attr mt7530_port[] = {
+	{
+		.type = SWITCH_TYPE_INT,
+		.name = "force_link",
+		.description = "Force port link state",
+		.get = mt7530_get_force_link,
+		.set = mt7530_set_force_link,
+	},
 };
 
 static const struct switch_attr mt7530_vlan[] = {
@@ -712,6 +798,7 @@ static const struct switch_dev_ops mt7530_ops = {
 	.get_port_pvid = mt7530_get_port_pvid,
 	.set_port_pvid = mt7530_set_port_pvid,
 	.get_port_link = mt7530_get_port_link,
+	.set_port_link = mt7530_get_port_link,
 	.apply_config = mt7530_apply_config,
 	.reset_switch = mt7530_reset_switch,
 };
