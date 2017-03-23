@@ -444,46 +444,6 @@ mvsw61xx_set_port_phydet(struct switch_dev *dev,
 	return 0;
 }
 
-
-static int
-mvsw61xx_get_fiber_control(struct switch_dev *dev,
-		const struct switch_attr *attr, struct switch_val *val)
-{
-	u16 reg, page;
-
-	// set 1 page for access to fiber registers
-	mvsw61xx_phy_read16(dev, 0xF, 22, &page);
-	mvsw61xx_phy_write16(dev, 0xF, 22, 1 );
-	
-
-	mvsw61xx_phy_read16(dev, 0xF, 0, &reg);
-
-	val->value.i = reg;
-
-	mvsw61xx_phy_write16(dev, 0xF, 22, page);
-
-	return 0;
-}
-
-static int
-mvsw61xx_set_fiber_control(struct switch_dev *dev,
-		const struct switch_attr *attr, struct switch_val *val)
-{
-	u16 reg, page;
-
-	// set 1 page for access to fiber registers
-	mvsw61xx_phy_read16(dev, 0xF, 22, &page);
-	mvsw61xx_phy_write16(dev, 0xF, 22, 1 );
-	
-
-	mvsw61xx_phy_write16(dev, 0xF, 0, val->value.i);
-
-	mvsw61xx_phy_write16(dev, 0xF, 22, page);
-
-	return 0;
-}
-
-
 static int
 mvsw61xx_get_fiber_power(struct switch_dev *dev,
 		const struct switch_attr *attr, struct switch_val *val)
@@ -526,73 +486,6 @@ mvsw61xx_set_fiber_power(struct switch_dev *dev,
 
 	return 0;
 }
-
-static int
-mvsw61xx_get_fiber_status(struct switch_dev *dev,
-		const struct switch_attr *attr, struct switch_val *val)
-{
-	u16 reg, page;
-
-	// set 1 page for access to fiber registers
-	mvsw61xx_phy_read16(dev, 0xF, 22, &page);
-	mvsw61xx_phy_write16(dev, 0xF, 22, 1 );
-	
-
-	mvsw61xx_phy_read16(dev, 0xF, 1, &reg);
-
-	val->value.i = reg;
-
-	mvsw61xx_phy_write16(dev, 0xF, 22, page);
-
-	return 0;
-}
-
-static int
-mvsw61xx_get_fiber_regs(struct switch_dev *dev,
-		const struct switch_attr *attr, struct switch_val *val)
-{
-	u16  page;
-	u16 reg;
-	int i;
-	struct mvsw61xx_state *state = get_state(dev);
-	size_t len = 0;
-	// set 1 page for access to fiber registers
-	mvsw61xx_phy_read16(dev, 0xF, 22, &page);
-	mvsw61xx_phy_write16(dev, 0xF, 22, 1 );
-	
-	len = snprintf(state->buf, state->buf_size, "\n00   01   02   03   04   05   06   07   08   09   0A   0B   0C   0D   0E   0F   10   11   12   13   14   15   16   17   18   19   1A   1B   1C   1D   1E   1F  \n");
-	
-	for( i=0; i < 32; i++ ){	
-		mvsw61xx_phy_read16(dev, 0xF, i, &reg);
-		len += snprintf( state->buf + len, state->buf_size - len, "%04X ", reg);
-	}
-
-	val->value.s = state->buf;
-	val->len = len;
-
-	mvsw61xx_phy_write16(dev, val->port_vlan, 22, page);
-
-	return 0;
-}
-
-static int
-mvsw61xx_set_fiber_status(struct switch_dev *dev,
-		const struct switch_attr *attr, struct switch_val *val)
-{
-	u16 reg, page;
-
-	// set 1 page for access to fiber registers
-	mvsw61xx_phy_read16(dev, 0xF, 22, &page);
-	mvsw61xx_phy_write16(dev, 0xF, 22, 1);
-	
-
-	mvsw61xx_phy_write16(dev, 0xF, 1, val->value.i);
-
-	mvsw61xx_phy_write16(dev, 0xF, 22, page);
-
-	return 0;
-}
-
 
 static int mvsw61xx_get_vlan_ports(struct switch_dev *dev,
 		struct switch_val *val)
@@ -1229,39 +1122,6 @@ static int mvsw61xx_set_regvalue(struct switch_dev *dev,
 	return 0;
 }
 
-static int mvsw61xx_get_fiber_regvalue(struct switch_dev *dev,
-		const struct switch_attr *attr, struct switch_val *val)
-{
-	struct mvsw61xx_state *state = get_state(dev);
-	uint8_t reg = state->reg;
-	uint16_t result;
-    mvsw61xx_phy_read16(dev, 0xF, reg, &result);
-
-	val->len = snprintf(state->buf, state->buf_size, "%d | 0x%X", reg, result);
-	val->value.s = state->buf;
-
-	return 0;
-}
-
-static int mvsw61xx_set_fiber_regvalue(struct switch_dev *dev,
-		const struct switch_attr *attr, struct switch_val *val)
-{
-	struct mvsw61xx_state *state = get_state(dev);
-
-	uint8_t reg;
-	uint16_t value;
-
-	if( strchr( val->value.s, ' ' ) == NULL ){ // have parameter
-		sscanf(val->value.s, "%hhd", &reg);
-		state->reg = reg;
-	} else {
-		sscanf(val->value.s, "%hhd %hd", &reg, &value);
-		state->reg = reg;
-		mvsw61xx_phy_write16(dev, 0xF, reg, value);
-	}
-
-	return 0;
-}
 enum {
 	MVSW61XX_ENABLE_VLAN,
 	MVSW61XX_LAN_DIODE,
@@ -1534,38 +1394,6 @@ static const struct switch_attr mvsw61xx_global[] = {
 		.set = mvsw61xx_set_vlan_lan_diode,
 	},
 
-	[MVSW61XX_FIBER_SHOW] = {
-		.id = MVSW61XX_FIBER_SHOW,
-		.type = SWITCH_TYPE_STRING,
-		.description = "Fiber registers",
-		.name = "fiber_registers",
-		.get = mvsw61xx_get_fiber_regs,
-		.set = NULL
-	},
-	[MVSW61XX_FIBER_CONTROL] = {
-		.id = MVSW61XX_FIBER_CONTROL,
-		.type = SWITCH_TYPE_INT,
-		.description = "Fiber control register",
-		.name = "fiber_control_reg",
-		.get = mvsw61xx_get_fiber_control,
-		.set = mvsw61xx_set_fiber_control,
-	},
-	[MVSW61XX_FIBER_STATUS] = {
-		.id = MVSW61XX_FIBER_STATUS,
-		.type = SWITCH_TYPE_INT,
-		.description = "Fiber status register",
-		.name = "fiber_status_reg",
-		.get = mvsw61xx_get_fiber_status,
-		.set = mvsw61xx_set_fiber_status,
-	},
-	[MVSW61XX_FIBER_REGVALUE] = {
-		.id = MVSW61XX_FIBER_REGVALUE,
-		.type = SWITCH_TYPE_STRING,
-		.description = "MII register and value",
-		.name = "regvalue",
-		.get = mvsw61xx_get_fiber_regvalue,
-		.set = mvsw61xx_set_fiber_regvalue,
-	},
 	[MVSW61XX_FIBER_POWER] = {
 		.id = MVSW61XX_FIBER_POWER,
 		.type = SWITCH_TYPE_INT,
