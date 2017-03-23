@@ -255,7 +255,7 @@ static void switch_link_event_work(struct work_struct *ugly) {
 	if(!evt->skb)
 		goto free_evt;
 	
-	ret = switch_event_add_var(evt,0,"DEVICENAME=%s",evt->dev->name);
+	ret = switch_event_add_var(evt,0,"DEVICENAME=%s",evt->dev->devname);
 	if( ret ) goto out_free_skb;
 	
 	ret = switch_fill_link_event(evt);
@@ -290,7 +290,7 @@ int switch_create_link_event(struct switch_dev *dev, u8 port, u16 link, u16 dupl
 	schedule_work(&evt->work);
 	return 0;
 }
-EXPORT_SYMBOL_GPL(switch_create_link_event)
+EXPORT_SYMBOL_GPL(switch_create_link_event);
 
 enum global_defaults {
 	GLOBAL_APPLY,
