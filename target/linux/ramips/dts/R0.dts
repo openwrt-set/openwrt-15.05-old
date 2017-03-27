@@ -106,21 +106,21 @@
 		    gpio-export,name  = "gsm:power";
 		    gpio-export,output = <1>;
 		};
-
+/*
 		GSM_ENABLE {
 		    gpios = <&gpio1 12 1>;
 		    gpio-export,name  = "gsm:enable";
 		    gpio-export,output = <1>;
 		};
-
+*/
 		GSM_RESET {
 		    gpios = <&gpio1 1 0>;
 		    gpio-export,name  = "gsm:reset";
 		    gpio-export,output = <0>;
 		};
 
-		ND_CS_N {
-		   gpios = <&gpio2 5 0>;
+		SIM_SELECT {
+		   gpios = <&gpio1 4 0>;
 		   gpio-export,name = "sim:select";
 		   gpio-export,output = <0>;
 		};
