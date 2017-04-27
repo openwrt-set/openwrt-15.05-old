@@ -15,6 +15,10 @@
 				compatible = "nxp,pcf85063";
 				reg = <0x51>;
 			};
+			gps@42 {
+				compatible = "ublox,neo";
+				reg = <0x42>;
+			};
 		};
 
 		spi@b00 {
