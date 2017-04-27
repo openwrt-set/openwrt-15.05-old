@@ -1,7 +1,7 @@
-From f954801c6f48fc291c39ca8a888dbdfda1021415 Mon Sep 17 00:00:00 2001
+From 23147af14531cbdada194b94120ef8774f46292d Mon Sep 17 00:00:00 2001
 From: John Crispin <blogic@openwrt.org>
 Date: Thu, 13 Nov 2014 19:08:40 +0100
-Subject: [PATCH] mmc: MIPS: ralink: add sdhci for mt7620a SoC
+Subject: [PATCH 46/53] mmc: MIPS: ralink: add sdhci for mt7620a SoC
 
 Signed-off-by: John Crispin <blogic@openwrt.org>
 ---
@@ -11,10 +11,10 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
  drivers/mmc/host/mtk-mmc/Makefile    |   42 +
  drivers/mmc/host/mtk-mmc/board.h     |  137 ++
  drivers/mmc/host/mtk-mmc/dbg.c       |  347 ++++
- drivers/mmc/host/mtk-mmc/dbg.h       |  153 ++
+ drivers/mmc/host/mtk-mmc/dbg.h       |  156 ++
  drivers/mmc/host/mtk-mmc/mt6575_sd.h | 1001 +++++++++++
- drivers/mmc/host/mtk-mmc/sd.c        | 3041 ++++++++++++++++++++++++++++++++++
- 9 files changed, 4740 insertions(+)
+ drivers/mmc/host/mtk-mmc/sd.c        | 3060 ++++++++++++++++++++++++++++++++++
+ 9 files changed, 4762 insertions(+)
  create mode 100644 drivers/mmc/host/mtk-mmc/Kconfig
  create mode 100644 drivers/mmc/host/mtk-mmc/Makefile
  create mode 100644 drivers/mmc/host/mtk-mmc/board.h
@@ -25,12 +25,13 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
 
 --- a/drivers/mmc/host/Kconfig
 +++ b/drivers/mmc/host/Kconfig
-@@ -773,3 +773,5 @@ config MMC_SUNXI
+@@ -773,3 +773,6 @@
  	help
  	  This selects support for the SD/MMC Host Controller on
  	  Allwinner sunxi SoCs.
 +
 +source "drivers/mmc/host/mtk-mmc/Kconfig"
++
 --- a/drivers/mmc/host/Makefile
 +++ b/drivers/mmc/host/Makefile
 @@ -2,6 +2,7 @@
@@ -1760,7 +1761,7 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
 +
 --- /dev/null
 +++ b/drivers/mmc/host/mtk-mmc/sd.c
-@@ -0,0 +1,3060 @@
+@@ -0,0 +1,3067 @@
 +/* Copyright Statement:
 + *
 + * This software/firmware and related documentation ("MediaTek Software") are
@@ -1958,7 +1959,7 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
 +	.dat_drv        = 4,
 +	.data_pins      = 4,
 +	.data_offset    = 0,
-+	.flags          = MSDC_SYS_SUSPEND | MSDC_WP_PIN_EN | MSDC_CD_PIN_EN | MSDC_REMOVABLE | MSDC_HIGHSPEED,
++	.flags          = MSDC_SYS_SUSPEND | MSDC_CD_PIN_EN | MSDC_REMOVABLE | MSDC_HIGHSPEED,
 +//	.flags          = MSDC_SYS_SUSPEND | MSDC_WP_PIN_EN | MSDC_CD_PIN_EN | MSDC_REMOVABLE,
 +};
 +
@@ -3906,8 +3907,8 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
 +    host->mrq = mrq;    
 +
 +    if (msdc_do_request(mmc,mrq)) {  	
-+        if(host->hw->flags & MSDC_REMOVABLE && mrq->data && mrq->data->error) {
-+            //msdc_tune_request(mmc,mrq);                                    	
++        if(host->hw->flags & MSDC_REMOVABLE && ralink_soc == MT762X_SOC_MT7621AT && mrq->data && mrq->data->error) {
++            msdc_tune_request(mmc,mrq);                                    	
 +        }        	
 +    }
 +
@@ -4509,6 +4510,9 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
 +    int ret, irq;
 + 
 +    pdev->dev.platform_data = &msdc0_hw;
++ 
++   if (of_property_read_bool(pdev->dev.of_node, "mtk,wp-en"))
++	msdc0_hw.flags |= MSDC_WP_PIN_EN;
 +  
 +    /* Allocate MMC host for this device */
 +    mmc = mmc_alloc_host(sizeof(struct msdc_host), &pdev->dev);
@@ -4603,7 +4607,11 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
 +    spin_lock_init(&host->lock);
 +    msdc_init_hw(host);
 +
-+    ret = request_irq((unsigned int)irq, msdc_irq, IRQF_TRIGGER_LOW, dev_name(&pdev->dev), host);
++	if (ralink_soc == MT762X_SOC_MT7621AT)
++		ret = request_irq((unsigned int)irq, msdc_irq, 0, dev_name(&pdev->dev), host);
++	else 
++		ret = request_irq((unsigned int)irq, msdc_irq, IRQF_TRIGGER_LOW, dev_name(&pdev->dev), host);
++
 +    if (ret) goto release;
 +    // mt65xx_irq_unmask(irq); /* --- by chhung */
 +    
