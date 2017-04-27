@@ -1,0 +1,24 @@
+--- a/drivers/net/wireless/ralink/rt2x00/rt2x00dev.c	2017-04-26 16:34:12.602639506 +0300
++++ b/drivers/net/wireless/ralink/rt2x00/rt2x00dev.c	2017-04-27 18:05:45.328137764 +0300
+@@ -1387,7 +1387,7 @@
+ 	retval = rt2x00dev->ops->lib->probe_hw(rt2x00dev);
+ 	if (retval) {
+ 		rt2x00_err(rt2x00dev, "Failed to allocate device\n");
+-		goto exit;
++		goto ret;
+ 	}
+ 
+ 	/*
+@@ -1442,8 +1442,10 @@
+ 	return 0;
+ 
+ exit:
++	pr_info("probe_dev exit jump");
+ 	rt2x00lib_remove_dev(rt2x00dev);
+-
++	pr_info("probe_dev after remove_dev");
++ret:
+ 	return retval;
+ }
+ EXPORT_SYMBOL_GPL(rt2x00lib_probe_dev);
+
