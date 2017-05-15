@@ -798,7 +798,7 @@ static const struct switch_dev_ops mt7530_ops = {
 	.get_port_pvid = mt7530_get_port_pvid,
 	.set_port_pvid = mt7530_set_port_pvid,
 	.get_port_link = mt7530_get_port_link,
-	.set_port_link = mt7530_get_port_link,
+	.set_port_link = mt7530_set_port_link,
 	.apply_config = mt7530_apply_config,
 	.reset_switch = mt7530_reset_switch,
 };
