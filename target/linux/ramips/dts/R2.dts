@@ -239,7 +239,7 @@
 		GSM2_ENABLE {
 		    gpios = <&gpio2 5 0 >;
 		    gpio-export,name  = "gsm2:enable";
-		    gpio-export,direction_may_change;
+		    gpio-export,output = <0>;
 		};
 	};
 	gpio-keys-polled {
