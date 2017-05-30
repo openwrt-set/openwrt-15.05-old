@@ -39,15 +39,6 @@ struct mvsw61xx_counter {
 	char* name; // counter name
 };
 
-struct mv_link_event {
-	u8 port;
-	u16 link;
-	u16 duplex;
-	u16 speed;
-	struct sk_buff *skb;
-	struct work_struct work;
-};
-
 enum {
 	MV_PORT_STATUS			= 0x00,
 	MV_PORT_PHYCTL			= 0x01,
@@ -296,7 +287,6 @@ struct mvsw61xx_state {
 	struct mii_bus *bus;
 	int base_addr;
 	u16 model;
-	u16 last_vlan;
 
 	bool registered;
 	bool is_indirect;
