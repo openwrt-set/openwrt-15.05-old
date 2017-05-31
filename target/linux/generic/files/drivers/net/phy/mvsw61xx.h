@@ -303,6 +303,7 @@ struct mvsw61xx_state {
 		u8 qmode;
 		u16 link_status;
 		u8 reg;
+		u8 port_disabled;
 	} ports[MV_PORTS];
 
 	struct vlan_state {

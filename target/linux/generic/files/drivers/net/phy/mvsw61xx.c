@@ -289,11 +289,15 @@ static int
 mvsw61xx_set_port_link(struct switch_dev *dev, int port,
 		struct switch_port_link *link)
 {
+	struct mvsw61xx_state *st = get_state(dev);
 	if (port < 0 || port > MV_PORTS)
 		return -EINVAL;
 
 	u16 reg,ctl,status, state, anar, ccr, gcr;
 	reg = sr16(dev, MV_PORTREG(PHYCTL, port));
+
+	if( st->ports[port].port_disabled ) 
+		return;
 
 	mvsw61xx_phy_read16 (dev, port, 0x04, &anar);
 	anar &= 0xfc1f;
@@ -303,7 +307,7 @@ mvsw61xx_set_port_link(struct switch_dev *dev, int port,
 
 	uint16_t spd = 0;
 	uint16_t spdg = 0;
-
+	printk(KERN_INFO "link speed 0x%02X\n", link->speed);
 	// speed not set, use auto
 	if ( link->speed == SWITCH_PORT_SPEED_UNKNOWN ) {
 		reg |= MV_PORT_STATUS_SPEED_AUTO;
@@ -399,14 +403,12 @@ mvsw61xx_set_force_link(struct switch_dev *dev,
 	u16 reg;
 	if (val->port_vlan < 0 || val->port_vlan > MV_PORTS)
 		return -EINVAL;
-
 	reg = sr16(dev, MV_PORTREG(PHYCTL, val->port_vlan));
 
+	reg |= 1 << 4;
 	if( val->value.i ) {
-		reg |= 1 << 4;
 		reg |= 1 << 5;
 	} else {
-		reg &= ~(1 << 4);
 		reg &= ~(1 << 5);
 	}
 
@@ -431,9 +433,25 @@ mvsw61xx_get_port_phydet(struct switch_dev *dev,
 }
 
 static int
-mvsw61xx_set_port_phydet(struct switch_dev *dev,
+mvsw61xx_get_port_disabled(struct switch_dev *dev,
 		const struct switch_attr *attr, struct switch_val *val)
 {
+	struct mvsw61xx_state *state = get_state(dev);
+
+	if( val->port_vlan > MV_PORTS )
+	    return -EINVAL;
+
+	val->value.i = state->ports[val->port_vlan].port_disabled;
+
+	return 0;
+}
+
+
+static int
+mvsw61xx_set_port_disabled(struct switch_dev *dev,
+		const struct switch_attr *attr, struct switch_val *val)
+{
+	struct mvsw61xx_state *state = get_state(dev);
 	u16 reg;
 	if (val->port_vlan < 0 || val->port_vlan > MV_PORTS)
 		return -EINVAL;
@@ -441,14 +459,19 @@ mvsw61xx_set_port_phydet(struct switch_dev *dev,
 	reg = sr16(dev, MV_PORTREG(STATUS, val->port_vlan));
 
 	if( val->value.i ) {
-		reg |= 1 << 12;
+		state->ports[val->port_vlan].port_disabled = 1;
+		reg &= ~(1 << 5);
+		reg |= 1 << 4;
 	} else {
-		reg &= ~(1 << 12);
+		state->ports[val->port_vlan].port_disabled = 0;
+		reg &= ~(1 << 4);
 	}
 
-	sw16(dev, MV_PORTREG(STATUS, val->port_vlan), reg);
+	sw16(dev, MV_PORTREG(PHYCTL, val->port_vlan), reg);
 	return 0;
 }
+
+
 
 static int
 mvsw61xx_get_fiber_power(struct switch_dev *dev,
@@ -945,8 +968,7 @@ static int mvsw61xx_get_vtu_base(struct switch_dev *dev,
 		vfid = sr16(dev, MV_GLOBALREG(VTU_FID));
 		vsid = sr16(dev, MV_GLOBALREG(VTU_SID));
 		ports = (vd2 << 16) + vd1;
-//		printk(KERN_INFO "vid: %d, fid: %d, sid: %d,  dataregs: 0x%x\n"
-//				, (vid & 0xFFF), vfid, vsid, ports);
+
 		if( (vid & MV_VTU_VID_VALID) && (state->buf_size - len > 0)) {
 			len += snprintf(state->buf + len, (state->buf_size - len), 
 				"vid: %d, fid: %d, sid: %d,  dataregs: 0x%X\n"
@@ -993,8 +1015,7 @@ static int mvsw61xx_get_stu_base(struct switch_dev *dev,
 		vfid = sr16(dev, MV_GLOBALREG(VTU_FID));
 		vsid = sr16(dev, MV_GLOBALREG(VTU_SID));
 		ports = (vd2 << 16) + vd1;
-//		printk(KERN_INFO "sid: %d, dataregs: 0x%x\n"
-//				, vsid, ports);
+
 		if( (vid & MV_VTU_VID_VALID) && (state->buf_size - len > 0)) {
 			len += snprintf(state->buf + len, (state->buf_size - len), 
 				"sid: %d,  dataregs: 0x%X\n"
@@ -1137,6 +1158,7 @@ enum {
 	MVSW61XX_PORT_FORCE_LINK,
 	MVSW61XX_PORT_STATUS,
 	MVSW61XX_PORT_PHYDET,
+	MVSW61XX_PORT_DISABLED,
 };
 
 struct mvsw61xx_counter mib_counters[] = {
@@ -1498,7 +1520,15 @@ static const struct switch_attr mvsw61xx_port[] = {
 		.description = "Port PHY detection",
 		.name = "phydet",
 		.get = mvsw61xx_get_port_phydet,
-		.set = mvsw61xx_set_port_phydet,
+		.set = NULL,
+	},
+	[MVSW61XX_PORT_DISABLED] = {
+		.id = MVSW61XX_PORT_DISABLED,
+		.type = SWITCH_TYPE_INT,
+		.description = "Port disabled",
+		.name = "port_disabled",
+		.get = mvsw61xx_get_port_disabled,
+		.set = mvsw61xx_set_port_disabled,
 	},
 
 };
