@@ -206,7 +206,8 @@ mvsw61xx_get_port_qmode(struct switch_dev *dev,
 		const struct switch_attr *attr, struct switch_val *val)
 {
 	struct mvsw61xx_state *state = get_state(dev);
-
+	if (val->port_vlan < 0 || val->port_vlan > MV_PORTS)
+		return -EINVAL;
 	val->value.i = state->ports[val->port_vlan].qmode;
 
 	return 0;
@@ -217,7 +218,8 @@ mvsw61xx_set_port_qmode(struct switch_dev *dev,
 		const struct switch_attr *attr, struct switch_val *val)
 {
 	struct mvsw61xx_state *state = get_state(dev);
-
+	if (val->port_vlan < 0 || val->port_vlan > MV_PORTS)
+		return -EINVAL;
 	state->ports[val->port_vlan].qmode = val->value.i;
 
 	return 0;
@@ -227,7 +229,8 @@ static int
 mvsw61xx_get_port_pvid(struct switch_dev *dev, int port, int *val)
 {
 	struct mvsw61xx_state *state = get_state(dev);
-
+	if (port < 0 || port > MV_PORTS)
+		return -EINVAL;
 	*val = state->ports[port].pvid;
 
 	return 0;
@@ -239,6 +242,9 @@ mvsw61xx_set_port_pvid(struct switch_dev *dev, int port, int val)
 	struct mvsw61xx_state *state = get_state(dev);
 
 	if (val < 0 || val >= MV_MAX_VLAN)
+		return -EINVAL;
+
+	if (port < 0 || port > MV_PORTS)
 		return -EINVAL;
 
 	state->ports[port].pvid = (u16)val;
@@ -283,6 +289,9 @@ static int
 mvsw61xx_set_port_link(struct switch_dev *dev, int port,
 		struct switch_port_link *link)
 {
+	if (port < 0 || port > MV_PORTS)
+		return -EINVAL;
+
 	u16 reg,ctl,status, state, anar, ccr, gcr;
 	reg = sr16(dev, MV_PORTREG(PHYCTL, port));
 
@@ -360,6 +369,8 @@ mvsw61xx_get_force_link(struct switch_dev *dev,
 		const struct switch_attr *attr, struct switch_val *val)
 {
 	u16 status;
+	if (val->port_vlan < 0 || val->port_vlan > MV_PORTS)
+		return -EINVAL;
 
 	status = sr16(dev, MV_PORTREG(PHYCTL, val->port_vlan));
 	val->value.i = (status & (1 << 4)) ? 1 : 0;
@@ -372,6 +383,8 @@ mvsw61xx_get_port_status(struct switch_dev *dev,
 		const struct switch_attr *attr, struct switch_val *val)
 {
 	u16 status;
+	if (val->port_vlan < 0 || val->port_vlan > MV_PORTS)
+		return -EINVAL;
 
 	status = sr16(dev, MV_PORTREG(STATUS, val->port_vlan));
 	val->value.i = status;
@@ -384,6 +397,9 @@ mvsw61xx_set_force_link(struct switch_dev *dev,
 		const struct switch_attr *attr, struct switch_val *val)
 {
 	u16 reg;
+	if (val->port_vlan < 0 || val->port_vlan > MV_PORTS)
+		return -EINVAL;
+
 	reg = sr16(dev, MV_PORTREG(PHYCTL, val->port_vlan));
 
 	if( val->value.i ) {
@@ -405,6 +421,8 @@ mvsw61xx_get_port_phydet(struct switch_dev *dev,
 		const struct switch_attr *attr, struct switch_val *val)
 {
 	u16 status;
+	if (val->port_vlan < 0 || val->port_vlan > MV_PORTS)
+		return -EINVAL;
 
 	status = sr16(dev, MV_PORTREG(STATUS, val->port_vlan));
 	val->value.i = status & (1 << 12) ? 1 : 0;
@@ -417,6 +435,9 @@ mvsw61xx_set_port_phydet(struct switch_dev *dev,
 		const struct switch_attr *attr, struct switch_val *val)
 {
 	u16 reg;
+	if (val->port_vlan < 0 || val->port_vlan > MV_PORTS)
+		return -EINVAL;
+
 	reg = sr16(dev, MV_PORTREG(STATUS, val->port_vlan));
 
 	if( val->value.i ) {
@@ -525,7 +546,11 @@ static int mvsw61xx_set_vlan_ports(struct switch_dev *dev,
 	v->mask = 0;
 	v->port_mode = 0;
 	v->port_sstate = 0;
-
+	
+	if( v->vid == 0xFFFF ) {
+	    v->vid = vno;
+	}
+	
 	for (i = 0; i < val->len; i++) {
 		pno = val->value.ports[i].id;
 
@@ -674,13 +699,13 @@ static int mvsw61xx_vtu_program(struct switch_dev *dev)
 	
 	/* Write VLAN table */
 	pr_info("apply vlan settings.\n");
-	for (i = 1; i < MV_MAX_VLAN; i++) {
-		pr_info("apply vlan %d vid: %d port_sstate: 0x%07X port_mode: 0x%07X\n", i, state->vlans[i].vid, state->vlans[i].port_sstate, state->vlans[i].port_mode );
+	for (i = 0; i < MV_VLANS; i++) {
 		if (state->vlans[i].mask == 0 ||
-				state->vlans[i].vid == 0 ||
+				state->vlans[i].vid == 0xFFFF ||
 				state->vlans[i].port_based == true)
 			continue;
 
+		pr_info("apply vlan %d vid: %d port_sstate: 0x%07X port_mode: 0x%07X\n", i, state->vlans[i].vid, state->vlans[i].port_sstate, state->vlans[i].port_mode );
 		mvsw61xx_wait_mask_s(dev, MV_GLOBALREG(VTU_OP),
 				MV_VTUOP_INPROGRESS, 0);
 
@@ -727,7 +752,7 @@ static void mvsw61xx_vlan_port_config(struct switch_dev *dev, struct vlan_state 
 	struct mvsw61xx_state *state = get_state(dev);
 	int i, mode;
 
-	if( v == NULL )
+	if( v == NULL || v->vid == 0xFFFF )
 		return;
 
 	for (i = 0; i < dev->ports; i++) {
@@ -791,8 +816,9 @@ static int mvsw61xx_update_state(struct switch_dev *dev)
 		state->ports[i].qmode = MV_8021Q_MODE_DISABLE;
 	}
 
-	for (i = 1; i < MV_VLANS; i++)
+	for (i = 0; i < MV_VLANS; i++) {
 		mvsw61xx_vlan_port_config(dev, &state->vlans[i] );
+	}
 
 	for (i = 0; i < dev->ports; i++) {
 		reg = sr16(dev, MV_PORTREG(VLANID, i)) & ~MV_PVID_MASK;
@@ -865,7 +891,7 @@ static int mvsw61xx_reset(struct switch_dev *dev)
 	for (i = 0; i < MV_VLANS; i++) {
 		state->vlans[i].port_based = false;
 		state->vlans[i].mask = 0;
-		state->vlans[i].vid = 0;
+		state->vlans[i].vid = 0xFFFF;
 		state->vlans[i].port_mode = 0;
 		state->vlans[i].port_sstate = 0;
 	}
@@ -919,8 +945,8 @@ static int mvsw61xx_get_vtu_base(struct switch_dev *dev,
 		vfid = sr16(dev, MV_GLOBALREG(VTU_FID));
 		vsid = sr16(dev, MV_GLOBALREG(VTU_SID));
 		ports = (vd2 << 16) + vd1;
-		printk(KERN_INFO "vid: %d, fid: %d, sid: %d,  dataregs: 0x%x\n"
-				, (vid & 0xFFF), vfid, vsid, ports);
+//		printk(KERN_INFO "vid: %d, fid: %d, sid: %d,  dataregs: 0x%x\n"
+//				, (vid & 0xFFF), vfid, vsid, ports);
 		if( (vid & MV_VTU_VID_VALID) && (state->buf_size - len > 0)) {
 			len += snprintf(state->buf + len, (state->buf_size - len), 
 				"vid: %d, fid: %d, sid: %d,  dataregs: 0x%X\n"
@@ -967,8 +993,8 @@ static int mvsw61xx_get_stu_base(struct switch_dev *dev,
 		vfid = sr16(dev, MV_GLOBALREG(VTU_FID));
 		vsid = sr16(dev, MV_GLOBALREG(VTU_SID));
 		ports = (vd2 << 16) + vd1;
-		printk(KERN_INFO "sid: %d, dataregs: 0x%x\n"
-				, vsid, ports);
+//		printk(KERN_INFO "sid: %d, dataregs: 0x%x\n"
+//				, vsid, ports);
 		if( (vid & MV_VTU_VID_VALID) && (state->buf_size - len > 0)) {
 			len += snprintf(state->buf + len, (state->buf_size - len), 
 				"sid: %d,  dataregs: 0x%X\n"
