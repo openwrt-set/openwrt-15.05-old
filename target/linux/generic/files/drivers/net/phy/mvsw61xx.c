@@ -456,18 +456,16 @@ mvsw61xx_set_port_disabled(struct switch_dev *dev,
 	if (val->port_vlan < 0 || val->port_vlan > MV_PORTS)
 		return -EINVAL;
 
-	reg = sr16(dev, MV_PORTREG(STATUS, val->port_vlan));
+	mvsw61xx_phy_read16(dev, MV_PHYREG(CONTROL, val->port_vlan), &reg);
 
 	if( val->value.i ) {
 		state->ports[val->port_vlan].port_disabled = 1;
-		reg &= ~(1 << 5);
-		reg |= 1 << 4;
+		reg |= 1 << 11;
 	} else {
 		state->ports[val->port_vlan].port_disabled = 0;
-		reg &= ~(1 << 4);
+		reg &= ~(1 << 11);
 	}
-
-	sw16(dev, MV_PORTREG(PHYCTL, val->port_vlan), reg);
+	mvsw61xx_phy_write16(dev, val->port_vlan, MV_PHY_CONTROL, reg);
 	return 0;
 }
 
