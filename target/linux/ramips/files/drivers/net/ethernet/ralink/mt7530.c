@@ -629,16 +629,23 @@ mt7530_set_port_link(struct switch_dev *dev,  int port,
 			struct switch_port_link *link)
 {
 	struct mt7530_priv *priv = container_of(dev, struct mt7530_priv, swdev);
-	u32 pmcr;
+	u32 pmcr, anar, cr;
 	if (port < 0 || port >= MT7530_NUM_PORTS)
 		return -EINVAL;
 
 	pmcr = mt7530_r32(priv, 0x3000 + (0x100 * port));
+	anar = _mt7530_mii_read(priv, port, 0x04);
 
+	cr = _mt7530_mii_read(priv, port, 0x00);
+	cr |= (1 << 15);
+	_mt7530_mii_write(priv, port, 0x00, cr);
+
+	anar &= ~(0xf << 5);
 	if (link->aneg) {
-		pmcr &= ~(1 << 15); // enable force mode
+		pmcr &= ~(1 << 15); // disable force mode
+		anar |= (0xf << 5);
 	} else {
-		pmcr &= ~(1 << 15); // enable force mode
+		pmcr |= ~(1 << 15); // enable force mode
 
 		if (link->duplex)
 			pmcr |= (1 << 1);
@@ -648,9 +655,19 @@ mt7530_set_port_link(struct switch_dev *dev,  int port,
 		pmcr &= ~(3 << 2);
 		switch (link->speed) {
 		case SWITCH_PORT_SPEED_10:
+			if (link->duplex) {
+			    anar |= (1 << 6);
+			} else {
+			    anar |= (1 << 5);
+			}
 			break;
 		case SWITCH_PORT_SPEED_100:
 			pmcr |= (1 << 2);
+			if (link->duplex) {
+			    anar |= (1 << 8);
+			} else {
+			    anar |= (1 << 7);
+			}
 			break;
 		case SWITCH_PORT_SPEED_1000:
 			pmcr |= (2 << 2);
@@ -658,9 +675,13 @@ mt7530_set_port_link(struct switch_dev *dev,  int port,
 		default:
 			return -ENOTSUPP;
 		}
-
-		mt7530_w32(priv, 0x3000 + (0x100 * port), pmcr);
 	}
+
+	mt7530_w32(priv, 0x3000 + (0x100 * port), pmcr);
+	_mt7530_mii_write(priv, port, 0x04, anar);
+
+	cr &= ~(1 << 15);
+	_mt7530_mii_write(priv, port, 0x00, cr);
 
 	return 0;
 }
