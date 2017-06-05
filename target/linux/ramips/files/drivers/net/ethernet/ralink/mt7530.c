@@ -33,12 +33,25 @@
 
 #include "mt7530.h"
 
+#ifdef CONFIG_SOC_MT7621
+#define MT7620A_GSW_REG_PIAC	0x0004
+#else
+#define MT7620A_GSW_REG_PIAC	0x7004
+#endif
+
 #define MT7530_CPU_PORT		6
 #define MT7530_NUM_PORTS	8
 #define MT7530_NUM_VLANS	16
 #define MT7530_MAX_VID		4095
 #define MT7530_MIN_VID		0
 
+#define GSW_MDIO_ACCESS		BIT(31)
+#define GSW_MDIO_READ		BIT(19)
+#define GSW_MDIO_WRITE		BIT(18)
+#define GSW_MDIO_START		BIT(16)
+#define GSW_MDIO_ADDR_SHIFT	20
+#define GSW_MDIO_REG_SHIFT	25
+#define GSW_REG_PHY_TIMEOUT	(5 * HZ)
 /* registers */
 #define REG_ESW_VLAN_VTCR		0x90
 #define REG_ESW_VLAN_VAWD1		0x94
@@ -60,7 +73,7 @@ enum {
 #define REG_ESW_PORT_PCR(x)	(0x2004 | ((x) << 8))
 #define REG_ESW_PORT_PVC(x)	(0x2010 | ((x) << 8))
 #define REG_ESW_PORT_PPBV1(x)	(0x2014 | ((x) << 8))
-
+#define GSW_REG_GPC1		0x7014
 #define REG_HWTRAP		0x7804
 
 #define MIB_DESC(_s , _o, _n)   \
@@ -171,6 +184,7 @@ enum {
 
 struct mt7530_port_entry {
 	u16	pvid;
+	u8	disabled;
 };
 
 struct mt7530_vlan_entry {
@@ -210,6 +224,8 @@ struct mt7530_mapping {
 		.vids = { 0, 1, 2 },
 	},
 };
+
+
 
 struct mt7530_mapping*
 mt7530_find_mapping(struct device_node *np)
@@ -318,6 +334,60 @@ mt7530_w32(struct mt7530_priv *priv, u32 reg, u32 val)
 	pr_debug("MT7530 MDIO Write[%04x]=%08x\n", reg, val);
 	iowrite32(val, priv->base + reg);
 }
+
+static int mt7530_mii_busy_wait(struct mt7530_priv *priv)
+{
+	unsigned long t_start = jiffies;
+
+	while (1) {
+		if (!(mt7530_r32(priv, MT7620A_GSW_REG_PIAC) & GSW_MDIO_ACCESS))
+			return 0;
+		if (time_after(jiffies, t_start + GSW_REG_PHY_TIMEOUT)) {
+			break;
+		}
+	}
+
+	printk(KERN_ERR "mdio: MDIO timeout\n");
+	return -1;
+}
+
+static u32 _mt7530_mii_write(struct mt7530_priv *priv, u32 phy_addr, u32 phy_register,
+				u32 write_data)
+{
+	if (mt7530_mii_busy_wait(priv))
+		return -1;
+
+	write_data &= 0xffff;
+
+	mt7530_w32(priv, MT7620A_GSW_REG_PIAC, GSW_MDIO_ACCESS | GSW_MDIO_START | GSW_MDIO_WRITE |
+		(phy_register << GSW_MDIO_REG_SHIFT) |
+		(phy_addr << GSW_MDIO_ADDR_SHIFT) | write_data);
+
+	if (mt7530_mii_busy_wait(priv))
+		return -1;
+
+	return 0;
+}
+
+static u32 _mt7530_mii_read(struct mt7530_priv *priv, int phy_addr, int phy_reg)
+{
+	u32 d;
+
+	if (mt7530_mii_busy_wait(priv))
+		return 0xffff;
+
+	mt7530_w32(priv, MT7620A_GSW_REG_PIAC, GSW_MDIO_ACCESS | GSW_MDIO_START | GSW_MDIO_READ |
+		(phy_reg << GSW_MDIO_REG_SHIFT) |
+		(phy_addr << GSW_MDIO_ADDR_SHIFT));
+
+	if (mt7530_mii_busy_wait(priv))
+		return 0xffff;
+
+	d = mt7530_r32(priv, MT7620A_GSW_REG_PIAC) & 0xffff;
+
+	return d;
+}
+
 
 static void
 mt7530_vtcr(struct mt7530_priv *priv, u32 cmd, u32 val)
@@ -605,6 +675,9 @@ mt7530_get_port_link(struct switch_dev *dev,  int port,
 	if (port < 0 || port >= MT7530_NUM_PORTS)
 		return -EINVAL;
 
+	if (priv->port_entries[port].disabled)
+		return -EINVAL;
+
 	pmsr = mt7530_r32(priv, 0x3008 + (0x100 * port));
 
 	link->link = pmsr & 1;
@@ -631,41 +704,45 @@ mt7530_get_port_link(struct switch_dev *dev,  int port,
 }
 
 static int
-mt7530_get_force_link(struct switch_dev *dev,
+mt7530_get_port_disabled(struct switch_dev *dev,
 		const struct switch_attr *attr, struct switch_val *val)
 {
 	struct mt7530_priv *priv = container_of(dev, struct mt7530_priv, swdev);
-	u32 pmsr;
 	u32 port = val->port_vlan;
+
 	if (port < 0 || port >= MT7530_NUM_PORTS)
 		return -EINVAL;
 
-	pmsr = mt7530_r32(priv, 0x3000 + (0x100 * port));
-	val->value.i = pmsr & 0x1;
+	val->value.i = priv->port_entries[port].disabled;
 
 	return 0;
 }
 
 static int
-mt7530_set_force_link(struct switch_dev *dev,
+mt7530_set_port_disabled(struct switch_dev *dev,
 		const struct switch_attr *attr, struct switch_val *val)
 {
 	struct mt7530_priv *priv = container_of(dev, struct mt7530_priv, swdev);
-	u32 pmcr;
 	u32 port = val->port_vlan;
+
 	if (port < 0 || port >= MT7530_NUM_PORTS)
 		return -EINVAL;
 
-	pmcr = mt7530_r32(priv, 0x3000 + (0x100 * port));
-	pmcr |= (1 << 15); // enable force mode
-	if( val->value.i )
-		pmcr |= 0x1;
-	else
-		pmcr &= ~(0x1);
+	u16 ctl;
+	ctl = _mt7530_mii_read(priv, port, 0);
 
-	mt7530_w32(priv, 0x3000 + (0x100 * port), pmcr);
+	if( val->value.i ) {
+		priv->port_entries[port].disabled = 1;
+		ctl |= (1 << 11);
+	} else {
+		priv->port_entries[port].disabled = 0;
+		ctl &= ~(1 << 11);
+	}
+	_mt7530_mii_write(priv, port, 0, ctl);
+
 	return 0;
 }
+
 
 
 static const struct switch_attr mt7530_global[] = {
@@ -740,10 +817,10 @@ static const struct switch_attr mt7621_port[] = {
 static const struct switch_attr mt7530_port[] = {
 	{
 		.type = SWITCH_TYPE_INT,
-		.name = "force_link",
-		.description = "Force port link state",
-		.get = mt7530_get_force_link,
-		.set = mt7530_set_force_link,
+		.name = "port_disabled",
+		.description = "Port disabled state",
+		.get = mt7530_get_port_disabled,
+		.set = mt7530_set_port_disabled,
 	},
 };
 
