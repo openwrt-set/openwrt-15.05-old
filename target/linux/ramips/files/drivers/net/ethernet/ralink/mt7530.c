@@ -609,8 +609,10 @@ mt7530_apply_config(struct switch_dev *dev)
 				val |= ETAG_CTRL_TAG << (j * 2);
 			}
 			else {
-				pr_info("port:%d, vid: %d\n", j, vid);
-				priv->port_entries[j].pvid = vid;
+				if( member & (1 << j) ) {
+					pr_info("port:%d, vid: %d\n", j, vid);
+					priv->port_entries[j].pvid = vid;
+				}
 				val |= ETAG_CTRL_UNTAG << (j * 2);
 			}
 		}
