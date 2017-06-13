@@ -271,7 +271,7 @@ mt7530_reset_switch(struct switch_dev *dev)
 	 * won't need be set explicitly.
 	 */
 	for (i = 0; i < MT7530_NUM_VLANS; i++) {
-		priv->vlan_entries[i].vid = i;
+		priv->vlan_entries[i].vid = 0xFFFF;
 	}
 
 	return 0;
@@ -491,7 +491,9 @@ mt7530_set_vlan_ports(struct switch_dev *dev, struct switch_val *val)
 	if (val->port_vlan < 0 || val->port_vlan >= MT7530_NUM_VLANS ||
 			val->len > MT7530_NUM_PORTS)
 		return -EINVAL;
-
+	if( priv->vlan_entries[val->port_vlan].vid == 0xffff ) {
+		priv->vlan_entries[val->port_vlan].vid = val->port_vlan;
+	}
 	for (i = 0; i < val->len; i++) {
 		struct switch_port *p = &val->value.ports[i];
 
@@ -578,6 +580,8 @@ mt7530_apply_config(struct switch_dev *dev)
 		u8 member = priv->vlan_entries[i].member;
 		u8 etags = priv->vlan_entries[i].etags;
 		u32 val;
+		if( vid == 0xFFFF )
+		    continue;
 
 		/* vid of vlan */
 		val = mt7530_r32(priv, REG_ESW_VLAN_VTIM(i));
@@ -601,10 +605,14 @@ mt7530_apply_config(struct switch_dev *dev)
 		/* egress mode */
 		val = 0;
 		for (j = 0; j < MT7530_NUM_PORTS; j++) {
-			if (etags & BIT(j))
+			if (etags & BIT(j)) {
 				val |= ETAG_CTRL_TAG << (j * 2);
-			else
+			}
+			else {
+				pr_info("port:%d, vid: %d\n", j, vid);
+				priv->port_entries[j].pvid = vid;
 				val |= ETAG_CTRL_UNTAG << (j * 2);
+			}
 		}
 		mt7530_w32(priv, REG_ESW_VLAN_VAWD2, val);
 
