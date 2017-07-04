@@ -1,0 +1,129 @@
+--- a/drivers/mtd/maps/ralink_nand.c	2017-07-03 14:57:44.378259612 +0300
++++ b/drivers/mtd/maps/ralink_nand.c	2017-07-03 13:56:57.356612505 +0300
+@@ -44,11 +44,8 @@
+ module_param(ranfc_verify, int, 0644);
+ #endif
+ 
+-#if 0
+-#define ra_dbg(args...) do { if (ranfc_debug) printk(args); } while(0)
+-#else
+-#define ra_dbg(args...)
+-#endif
++
++#define ra_dbg(args...) do { printk(args); } while(0)
+ 
+ #define CLEAR_INT_STATUS()	ra_outl(NFC_INT_ST, ra_inl(NFC_INT_ST))
+ #define NFC_TRANS_DONE()	(ra_inl(NFC_INT_ST) & INT_ST_ND_DONE)
+@@ -1517,7 +1514,7 @@
+ 	int pagemask = (pagesize -1);
+ 	int oobsize = 1<<ra->oob_shift;
+ 	loff_t addr = to;
+-	//int i = 0; //for ra_dbg only
++	int i = 0; //for ra_dbg only
+ 
+ 	ra_dbg("%s: to:%x, ops data:%p, oob:%p datalen:%x ooblen:%x, ooboffs:%x oobmode:%x \n", 
+ 	       __func__, (unsigned int)to, data, oob, datalen, ooblen, ops->ooboffs, ops->mode);
+@@ -1643,7 +1640,7 @@
+ 	int pagesize = (1<<ra->page_shift);
+ 	int pagemask = (pagesize -1);
+ 	loff_t addr = from;
+-	//int i = 0; //for ra_dbg only
++	int i = 0; //for ra_dbg only
+ 
+ 	ra_dbg("%s: addr:%x, ops data:%p, oob:%p datalen:%x ooblen:%x, ooboffs:%x \n", 
+ 	       __func__, (unsigned int)addr, data, oob, datalen, ooblen, ops->ooboffs);
+@@ -1953,49 +1950,39 @@
+         struct mtd_part_parser_data ppdata;
+ 	struct ra_nand_chip *ra;
+ 	int alloc_size, bbt_size, buffers_size, reg, err;
+-	unsigned char chip_mode = 12;
+-
+-/*	if(ra_check_flash_type()!=BOOT_FROM_NAND) {
+-		return 0;
+-	}*/
++	unsigned char chip_mode = 1;
++	unsigned char nand_id[4];
++	
++	nfc_chip_reset();
++	
++	if ( _nfc_read_raw_data(0x90, 0, 0, 0, 0x410141, nand_id, 4, 0) ) {
++	    // fail :(
++	    return -1;
++	}
+ 
+-	//FIXME: config 512 or 2048-byte page according to HWCONF
+-#if defined (CONFIG_RALINK_RT6855A)
+-	reg = ra_inl(RALINK_SYSCTL_BASE+0x8c);
+-	chip_mode = ((reg>>28) & 0x3)|(((reg>>22) & 0x3)<<2);
+-	if (chip_mode == 1) {
+-		printk("! nand 2048\n");
+-		ra_or(NFC_CONF1, 1);
++	pr_info("nand id: 0x%02X 0x%02X 0x%02X 0x%02X\n", nand_id[0], nand_id[1], nand_id[2], nand_id[3]);
++
++	switch(nand_id[1]) {
++	    case 0xda:
++	    case 0xdc:
++	    case 0xca:
++	    case 0xcc:
+ 		is_nand_page_2048 = 1;
+ 		nand_addrlen = 5;
+-	}
+-	else {
+-		printk("! nand 512\n");
+-		ra_and(NFC_CONF1, ~1);
++		break;
++	    case 0xa1:
++	    case 0xf1:
++	    case 0xd1:
++	    case 0xb1:
++	    case 0xc1:
++		is_nand_page_2048 = 1;
++		nand_addrlen = 4;
++		break;
++	    default:
+ 		is_nand_page_2048 = 0;
+ 		nand_addrlen = 4;
+-	}	
+-#elif (defined (CONFIG_RALINK_MT7620) || defined (CONFIG_RALINK_RT6855))
+-	ra_outl(RALINK_SYSCTL_BASE+0x60, ra_inl(RALINK_SYSCTL_BASE+0x60) & ~(0x3<<18));
+-	reg = ra_inl(RALINK_SYSCTL_BASE+0x10);
+-	chip_mode = (reg & 0x0F);
+-	if((chip_mode==1)||(chip_mode==11)) {
+-		ra_or(NFC_CONF1, 1);
+-		is_nand_page_2048 = 1;
+-		nand_addrlen = ((chip_mode!=11) ? 4 : 5);
+-		printk("!!! nand page size = 2048, addr len=%d\n", nand_addrlen);
++		break;
+ 	}
+-	else {
+-		ra_and(NFC_CONF1, ~1);
+-		is_nand_page_2048 = 0;
+-		nand_addrlen = ((chip_mode!=10) ? 3 : 4);
+-		printk("!!! nand page size = 512, addr len=%d\n", nand_addrlen);
+-	}			
+-#else
+-	is_nand_page_2048 = 0;
+-	nand_addrlen = 3;
+-	printk("!!! nand page size = 512, addr len=%d\n", nand_addrlen);
+-#endif			
+ 
+ #if defined (CONFIG_RALINK_RT6855A) || defined (CONFIG_RALINK_MT7620) || defined (CONFIG_RALINK_RT6855) 
+ 	//config ECC location
+@@ -2016,7 +2003,7 @@
+ 	alloc_size += sizeof(*ranfc_mtd);
+ 
+ 	//make sure gpio-0 is input
+-	ra_outl(RALINK_PIO_BASE+0x24, ra_inl(RALINK_PIO_BASE+0x24) & ~0x01);
++//	ra_outl(RALINK_PIO_BASE+0x24, ra_inl(RALINK_PIO_BASE+0x24) & ~0x01);
+ 
+ 	ra = (struct ra_nand_chip *)kzalloc(alloc_size, GFP_KERNEL | GFP_DMA);
+ 	if (!ra) {
+@@ -2057,6 +2044,7 @@
+ 	ranfc_mtd->size		= CONFIG_NUMCHIPS * CFG_CHIPSIZE;
+ 	ranfc_mtd->erasesize	= CFG_BLOCKSIZE;
+ 	ranfc_mtd->writesize	= CFG_PAGESIZE;
++	ranfc_mtd->writebufsize	= CFG_PAGESIZE;
+ 	ranfc_mtd->oobsize 	= CFG_PAGE_OOBSIZE;
+ 	ranfc_mtd->oobavail	= RA_CHIP_OOB_AVAIL;
+ 	ranfc_mtd->name		= "ra_nfc";
+
