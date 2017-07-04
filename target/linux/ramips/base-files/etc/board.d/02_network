@@ -241,6 +241,7 @@ ramips_setup_interfaces()
 		;;
 	s-terra)
 		ucidef_add_switch "switch0" "0:lan" "6t@eth0"
+		ucidef_set_interfaces_lan_wan "eth0.1" "eth1"
 		;;
 	*)
 		RT3X5X=`cat /proc/cpuinfo | egrep "(RT3.5|RT5350)"`
