@@ -239,6 +239,9 @@ ramips_setup_interfaces()
 	irz_mt02)
 		ucidef_add_switch "switch0" "1:lan" "2:lan" "3:lan" "4:lan" "6t@eth0"
 		;;
+	s-terra)
+		ucidef_add_switch "switch0" "0:lan" "6t@eth0"
+		;;
 	*)
 		RT3X5X=`cat /proc/cpuinfo | egrep "(RT3.5|RT5350)"`
 		if [ -n "${RT3X5X}" ]; then
@@ -371,6 +374,10 @@ ramips_setup_macs()
 		lan_mac=$(mtd_get_mac_binary factory 40)
 		;;
 	irz_ra01)
+		lan_mac=$(mtd_get_mac_binary factory 40)
+		wan_mac=$(mtd_get_mac_binary factory 46)
+		;;
+	s-terra)
 		lan_mac=$(mtd_get_mac_binary factory 40)
 		wan_mac=$(mtd_get_mac_binary factory 46)
 		;;

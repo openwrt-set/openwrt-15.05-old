@@ -445,6 +445,9 @@ ramips_board_detect() {
 	*"R2 board")
 		name="irz_mt02"
 		;;
+	*"s-terra")
+		name="s-terra"
+		;;
 	*)
 		name="generic"
 		;;

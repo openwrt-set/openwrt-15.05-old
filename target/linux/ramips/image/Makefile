@@ -982,6 +982,11 @@ define BuildFirmware/R2/squashfs
 	$(call Image/Build/SysupgradeTAR,$(2),$(1),$(KDIR)/vmlinux-$(2).uImage)
 endef
 
+define BuildFirmware/S-TERRA/squashfs
+	$(call BuildFirmware/CustomFlash/$(1),$(1),s-terra,S-TERRA,12255232)
+	$(call Image/Build/SysupgradeTAR,$(2),$(1),$(KDIR)/vmlinux-$(2).uImage)
+endef
+
 define BuildFirmware/RX/squashfs
 	$(call BuildFirmware/R2/squashfs,$(1))
 	$(call BuildFirmware/R0/squashfs,$(1))
@@ -997,6 +1002,9 @@ Image/Build/Profile/R0=$(call BuildFirmware/R0/$(1),$(1),irz_mt00,R0)
 
 BuildFirmware/R2/initramfs=$(call BuildFirmware/CustomFlash/$(1),$(1),irz_mt02,R2,12255232)
 Image/Build/Profile/R2=$(call BuildFirmware/R2/$(1),$(1),irz_mt02,R2)
+
+BuildFirmware/S-TERRA/initramfs=$(call BuildFirmware/CustomFlash/$(1),$(1),s-terra,S-TERRA,12255232)
+Image/Build/Profile/S-TERRA=$(call BuildFirmware/S-TERRA/$(1),$(1),s-terra,S-TERRA)
 
 Image/Build/Profile/RX=$(call BuildFirmware/RX/$(1),$(1))
 
@@ -1035,6 +1043,7 @@ define Image/Build/Profile/Default
 	$(call Image/Build/Profile/RX15,$(1))
 	$(call Image/Build/Profile/R0,$(1))
 	$(call Image/Build/Profile/R2,$(1))
+	$(call Image/Build/Profile/S-TERRA,$(1))
 	$(call Image/Build/Profile/RX,$(1))
 endef
 endif

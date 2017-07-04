@@ -265,6 +265,9 @@ get_status_led() {
 	irz_mt02)
 		status_led="status"
 		;;
+	s-terra)
+		status_led="status"
+		;;
 	esac
 }
 

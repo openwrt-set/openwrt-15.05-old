@@ -14,10 +14,17 @@ define Profile/R2
 	DEPENDS:= +kmod-rtc-pcf85063 +kmod-sdhci-mt7620
 endef
 
+define Profile/S-TERRA
+	NAME:=S-Terra board
+	DEPENDS:= +kmod-rtc-pcf85063
+	FEATURES+=nand
+endef
+
 define Profile/RX
 	NAME:="irz_mtxx boards composite profile"
 endef
 
 $(eval $(call Profile,R0))
 $(eval $(call Profile,R2))
+$(eval $(call Profile,S-TERRA))
 $(eval $(call Profile,RX))
