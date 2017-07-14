@@ -538,6 +538,20 @@ endef
 
 $(eval $(call KernelPackage,gre6))
 
+define KernelPackage/eoip
+  SUBMENU:=$(NETWORK_SUPPORT_MENU)
+  TITLE:=EOIP ethernet tunnels
+  DEPENDS:=+kmod-gre
+  KCONFIG:=CONFIG_NET_EOIP
+  FILES:=$(LINUX_DIR)/net/ipv4/eoip.ko
+  AUTOLOAD:=$(call AutoLoad,40,eoip)
+endef
+
+define KernelPackage/eoip/description
+ EOIP ethernet tunnels over IP
+endef
+
+$(eval $(call KernelPackage,eoip))
 
 define KernelPackage/tun
   SUBMENU:=$(NETWORK_SUPPORT_MENU)
