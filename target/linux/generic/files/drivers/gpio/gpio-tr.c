@@ -45,7 +45,8 @@ int gpio_tr_dir_output(struct gpio_chip *chip, unsigned offset, int value ){
 int gpio_tr_get_value(struct gpio_chip *chip, unsigned offset ){
     const struct gpio_tr_platform_data *pdata = dev_get_platdata(chip->dev);
     
-    return gpio_get_value( pdata->pins[offset].input_pin);
+    return !gpiod_get_value(gpio_to_desc(pdata->pins[offset].input_pin));
+//    return gpio_get_value( pdata->pins[offset].input_pin);
 }
 
 void gpio_tr_set_value(struct gpio_chip *chip, unsigned offset, int value ){
@@ -63,15 +64,15 @@ void gpio_tr_set_value(struct gpio_chip *chip, unsigned offset, int value ){
 }
 
 static int gpio_tr_request(struct gpio_chip *chip, unsigned offset) {
-    const struct gpio_tr_platform_data *pdata = dev_get_platdata(chip->dev);
+	const struct gpio_tr_platform_data *pdata = dev_get_platdata(chip->dev);
 
-    if( pdata == NULL ){
+	if( pdata == NULL ){
 		dev_err(chip->dev, "Platform data return NULL." );
 		return -EFAULT;
-    }
+	}
 	
-    struct gpio_tr_pin* pin = &pdata->pins[offset];
-	
+	struct gpio_tr_pin* pin = &pdata->pins[offset];
+
 	dev_dbg(chip->dev, "Request (%d) pin input(%d) high(%d) low(%d)", offset, pin->input_pin, pin->high_pin, pin->low_pin);
 	
 	if( gpio_request(pin->input_pin, NULL) != 0 ){
@@ -84,19 +85,19 @@ static int gpio_tr_request(struct gpio_chip *chip, unsigned offset) {
 	    dev_err(chip->dev, "High level pin(%d) in tr-pin %d already in use",pin->high_pin, offset);
 	    return -EBUSY;
 	}
-	
+
 	if( gpio_request(pin->low_pin, NULL) != 0 ){
 	    gpio_free(pin->input_pin);
 	    gpio_free(pin->high_pin);
 	    dev_err(chip->dev, "Low level pin(%d) in tr-pin %d already in use",pin->low_pin, offset);
 	    return -EBUSY;
 	}
-	
+
 	gpio_direction_input(pin->input_pin);
 	gpio_direction_output(pin->high_pin, 0);
 	gpio_direction_output(pin->low_pin, 0);
-	
-    pin->claimed = 1;
+	pin->direction = GPIOF_DIR_IN;
+	pin->claimed = 1;
 
 	return 0;
 }
