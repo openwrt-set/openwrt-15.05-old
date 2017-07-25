@@ -157,17 +157,17 @@
 	    #address-cells = <1>;
 	    #gpio-cells = <2>;
 	    gpio-controller;
-	    io1 {
+	    io7 {
 		low_pin		= <&gpiosh 1  0x0>;
 		high_pin	= <&gpiosh 9  0x0>;
 		input_pin	= <&gpio2  31 0x1>;
 	    };
-	    io2 {
+	    io6 {
 		low_pin		= <&gpiosh 2  0x0>;
 		high_pin	= <&gpiosh 10 0x0>;
 		input_pin	= <&gpio2  30 0x1>;
 	    };
-	    io3 {
+	    io5 {
 		low_pin		= <&gpiosh 3  0x0>;
 		high_pin	= <&gpiosh 11 0x0>;
 		input_pin	= <&gpio2  26 0x1>;
@@ -177,17 +177,17 @@
 		high_pin	= <&gpiosh 12 0x0>;
 		input_pin	= <&gpio2  27 0x1>;
 	    };
-	    io5 {
+	    io3 {
 		low_pin		= <&gpiosh 5  0x0>;
 		high_pin	= <&gpiosh 13 0x0>;
 		input_pin	= <&gpio2  28 0x1>;
 	    };
-	    io6 {
+	    io2 {
 		low_pin		= <&gpiosh 6  0x0>;
 		high_pin	= <&gpiosh 14 0x0>;
 		input_pin	= <&gpio2  29 0x1>;
 	    };
-	    io7 {
+	    io1 {
 		low_pin		= <&gpiosh 7  0x0>;
 		high_pin	= <&gpiosh 15 0x0>;
 		input_pin	= <&gpio2  25 0x1>;
