@@ -129,7 +129,7 @@
 	};
 
 	pcie@10140000 {
-		status = "disabled";
+		status = "okay";
 	};
 
 	spi_gpio {
