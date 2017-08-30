@@ -126,12 +126,14 @@
 		USB1_POWER {
 		    gpios = <&gpio0 0 1>;
 		    gpio-export,name  = "usb1:power";
-		    gpio-export,output = <1>;
+		    gpio-export,input;
+		    gpio-export,direction-may-change;
 		};
 		USB2_POWER {
 		    gpios = <&gpio1 6 1>;
 		    gpio-export,name  = "usb2:power";
 		    gpio-export,output = <1>;
+		    gpio-export,direction-may-change;
 		};
 		STATUS_RESET {
 		    gpios = <&gpio1 9 1>;
