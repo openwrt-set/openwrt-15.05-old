@@ -1,15 +1,14 @@
-From 225f36695bb07dad9510f9affd79e63f1a44a195 Mon Sep 17 00:00:00 2001
-From: John Crispin <blogic@openwrt.org>
-Date: Sun, 27 Jul 2014 09:52:56 +0100
-Subject: [PATCH 52/57] i2c: MIPS: adds ralink I2C driver
+From 6a63640eddf25f17d7794bcc188092c8a227f52f Mon Sep 17 00:00:00 2001
+From: Dmitry Peresypkin <dperesypkin@radiofid.ru>
+Date: Tue, 17 Oct 2017 15:29:42 +0300
+Subject: [PATCH 52/57] i2c: MIPS: adds relink I2C driver
 
-Signed-off-by: John Crispin <blogic@openwrt.org>
 ---
- .../devicetree/bindings/i2c/i2c-ralink.txt         |   27 ++
- drivers/i2c/busses/Kconfig                         |    4 +
- drivers/i2c/busses/Makefile                        |    1 +
- drivers/i2c/busses/i2c-ralink.c                    |  274 ++++++++++++++++++++
- 4 files changed, 306 insertions(+)
+ .../devicetree/bindings/i2c/i2c-ralink.txt         |  27 ++
+ drivers/i2c/busses/Kconfig                         |   4 +
+ drivers/i2c/busses/Makefile                        |   1 +
+ drivers/i2c/busses/i2c-ralink.c                    | 379 +++++++++++++++++++++
+ 4 files changed, 411 insertions(+)
  create mode 100644 Documentation/devicetree/bindings/i2c/i2c-ralink.txt
  create mode 100644 drivers/i2c/busses/i2c-ralink.c
 
@@ -68,7 +67,7 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
  obj-$(CONFIG_I2C_RK3X)		+= i2c-rk3x.o
 --- /dev/null
 +++ b/drivers/i2c/busses/i2c-ralink.c
-@@ -0,0 +1,308 @@
+@@ -0,0 +1,379 @@
 +/*
 + * drivers/i2c/busses/i2c-ralink.c
 + *
@@ -118,21 +117,34 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
 +
 +#define SYSC_REG_RESET_CTRL	0x34
 +
-+#define I2C_RST			(1<<16)
++#define I2C_ADDRLEN_OFFSET	5
++#define I2C_DEVADLEN_OFFSET	2
++#define I2C_ADDRLEN_MASK	0x3
++#define I2C_ADDR_DIS		BIT(1)
++#define I2C_DEVADDR_DIS		BIT(0)
++#define I2C_ADDRLEN_8		(7 << I2C_ADDRLEN_OFFSET)
++#define I2C_DEVADLEN_7		(6 << I2C_DEVADLEN_OFFSET)
++#define I2C_CONF_DEFAULT	(I2C_ADDRLEN_8 | I2C_DEVADLEN_7)
++
++/* REG_CLKDIV_REG */
++#define I2C_CLKDIV_MASK		0xffff
++
++/* REG_DEVADDR_REG */
++#define I2C_DEVADDR_MASK	0x7f
++
++/* REG_ADDR_REG */
++#define I2C_ADDR_MASK		0xff
++
++//#define I2C_RST			(1<<16)
 +#define I2C_STARTERR		BIT(4)
 +#define I2C_ACKERR		BIT(3)
 +#define I2C_DATARDY		BIT(2)
 +#define I2C_SDOEMPTY		BIT(1)
 +#define I2C_BUSY		BIT(0)
 +
-+#define I2C_DEVADLEN_7		(6 << 2)
 +#define I2C_ADDRDIS		BIT(1)
 +
 +#define CLKDIV_VALUE		200
-+
-+#define READ_CMD		0x01
-+#define WRITE_CMD		0x00
-+#define READ_BLOCK              64
 +
 +#define SM0CTL0_OD		BIT(31)
 +#define SM0CTL0_VTRIG		BIT(28)
@@ -140,143 +152,184 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
 +#define SM0CTL0_STRETCH		BIT(1)
 +#define SM0CTL0_DEFAULT		(SM0CTL0_OD | SM0CTL0_VTRIG | SM0CTL0_OUTHI | SM0CTL0_STRETCH)
 +
-+#define MAX_SIZE			63
++#define BYTECNT_MAX			64
++#define SET_BYTECNT(x)		(x - 1)
 +
-+enum {
-+	I2C_TYPE_RALINK,
-+	I2C_TYPE_MEDIATEK,
++#define NOSTOP_CMD			BIT(2)
++#define NODATA_CMD			BIT(1)
++#define READ_CMD			BIT(0)
++
++#define TIMEOUT_MS			1000
++#define DELAY_INTERVAL_US	100
++
++struct rt_i2c {
++	void __iomem *base;
++	struct device *dev;
++	struct i2c_adapter adap;
 +};
 +
-+static void __iomem *membase;
-+static struct i2c_adapter *adapter;
-+static int hw_type;
 +
-+static void rt_i2c_w32(u32 val, unsigned reg)
++static void rt_i2c_w32(struct rt_i2c *i2c, u32 val, unsigned reg)
 +{
-+	iowrite32(val, membase + reg);
++	iowrite32(val, i2c->base + reg);
 +}
 +
-+static u32 rt_i2c_r32(unsigned reg)
++static u32 rt_i2c_r32(struct rt_i2c *i2c, unsigned reg)
 +{
-+	return ioread32(membase + reg);
++	return ioread32(i2c->base + reg);
 +}
 +
-+static void rt_i2c_default_speed(void)
++static int poll_down_timeout(void __iomem *addr, u32 mask)
 +{
-+	if (hw_type == I2C_TYPE_RALINK) {
-+		rt_i2c_w32(CLKDIV_VALUE, REG_CLKDIV_REG);
-+	} else {
-+		rt_i2c_w32((CLKDIV_VALUE << 16) | SM0CTL0_DEFAULT, REG_SM0CTL0);
-+		rt_i2c_w32(1, REG_SM0CFG2);
-+	}
++	unsigned long timeout = jiffies + msecs_to_jiffies(TIMEOUT_MS);
++
++	do {
++		if (!(readl_relaxed(addr) &mask))
++			return 0;
++
++		usleep_range(DELAY_INTERVAL_US, DELAY_INTERVAL_US + 50);
++	} while (time_before(jiffies, timeout));
++
++	return (readl_relaxed(addr) & mask) ? -EAGAIN : 0;
 +}
 +
-+static void rt_i2c_init(struct i2c_adapter *a)
-+{/*
-+	u32 val;
-+	
-+	val = rt_sysc_r32(SYSC_REG_RESET_CTRL);
-+	val |= I2C_RST;
-+	rt_sysc_w32(val, SYSC_REG_RESET_CTRL);
-+	
-+	val &= ~I2C_RST;
-+	rt_sysc_w32(val, SYSC_REG_RESET_CTRL);
-+*/
-+	device_reset(a->dev.parent);
-+	
-+	udelay(500);
-+	rt_i2c_w32(I2C_DEVADLEN_7 | I2C_ADDRDIS, REG_CONFIG_REG);
-+	
-+	rt_i2c_default_speed();
-+}
-+
-+static inline int rt_i2c_wait_rx_done(void)
++static int rt_i2c_wait_idle(struct rt_i2c *i2c)
 +{
-+	while (!(rt_i2c_r32(REG_STATUS_REG) & I2C_DATARDY));
-+	return 0;
-+}
++	//while (rt_i2c_r32(REG_STATUS_REG) & I2C_BUSY);
++	int ret;
 +
-+static inline int rt_i2c_wait_idle(void)
-+{
-+	while (rt_i2c_r32(REG_STATUS_REG) & I2C_BUSY);
-+	return 0;
-+}
++	ret = poll_down_timeout(i2c->base + REG_STATUS_REG, I2C_BUSY);
 +
-+static inline int rt_i2c_wait_tx_done(void)
-+{
-+	while (!(rt_i2c_r32(REG_STATUS_REG) & I2C_SDOEMPTY));
-+	return 0;
-+}
-+
-+static int rt_i2c_handle_msg(struct i2c_adapter *a, struct i2c_msg* msg)
-+{
-+	int i = 0, j = 0, pos = 0;
-+	int nblock = msg->len / READ_BLOCK;
-+	int rem = msg->len % READ_BLOCK;
-+	int ret = 0;
-+
-+	if (msg->flags & I2C_M_TEN) {
-+		printk("10 bits addr not supported\n");
-+		return -EINVAL;
-+	}
-+
-+	if (msg->len > MAX_SIZE) {
-+		printk("Notice! The FIFO data length is 64 Byte\n");
-+		return -EINVAL;
-+	}
-+
-+	if (msg->flags & I2C_M_RD) {
-+		for (i = 0; i < nblock; i++) {
-+			rt_i2c_wait_idle();
-+			rt_i2c_w32(READ_BLOCK - 1, REG_BYTECNT_REG);
-+			rt_i2c_w32(READ_CMD, REG_STARTXFR_REG);
-+			for (j = 0; j < READ_BLOCK; j++) {
-+				rt_i2c_wait_rx_done();
-+				msg->buf[pos++] = rt_i2c_r32(REG_DATAIN_REG);
-+			}
-+		}
-+
-+		rt_i2c_wait_idle();
-+		if (rem) {
-+			rt_i2c_w32(rem - 1, REG_BYTECNT_REG);
-+			rt_i2c_w32(READ_CMD, REG_STARTXFR_REG);
-+		}
-+		for (i = 0; i < rem; i++) {
-+			rt_i2c_wait_rx_done();
-+			msg->buf[pos++] = rt_i2c_r32(REG_DATAIN_REG);
-+		}
-+	} else {
-+		rt_i2c_wait_idle();
-+		rt_i2c_w32(msg->len - 1, REG_BYTECNT_REG);
-+		for (i = 0; i < msg->len; i++) {
-+			rt_i2c_w32(msg->buf[i], REG_DATAOUT_REG);
-+			if (i == 0)
-+				rt_i2c_w32(WRITE_CMD, REG_STARTXFR_REG);
-+			rt_i2c_wait_tx_done();
-+		}
-+		//mdelay(2);
-+	}
++	if (ret < 0)
++		dev_dbg(i2c->dev, "idle err(%d)\n", ret);
 +
 +	return ret;
 +}
 +
-+static int rt_i2c_master_xfer(struct i2c_adapter *a, struct i2c_msg *m, int n)
++static int poll_up_timeout(void __iomem *addr, u32 mask)
 +{
-+	int i = 0;
-+	int ret = 0;
++	unsigned long timeout = jiffies + msecs_to_jiffies(TIMEOUT_MS);
++	u32 status;
 +
-+	rt_i2c_w32(m->addr, REG_DEVADDR_REG);
-+	rt_i2c_w32(0, REG_ADDR_REG);
++	do {
++		status = readl_relaxed(addr);
 +
-+	for (i = 0; ret == 0 && i !=n; i++) {
-+		ret = rt_i2c_handle_msg(a, &m[i]);
++		if (status & I2C_STARTERR)
++			return -EAGAIN;
++		else if (status & I2C_ACKERR)
++			return -ENXIO;
++		else if (status & mask)
++			return 0;
 +
-+		if (ret < 0) {
-+			return ret;
++		usleep_range(DELAY_INTERVAL_US, DELAY_INTERVAL_US + 50);
++	} while (time_before(jiffies, timeout));
++
++	return -ETIMEDOUT;
++}
++
++static inline int rt_i2c_wait_rx_done(struct rt_i2c *i2c)
++{
++	int ret ;
++
++	ret = poll_up_timeout(i2c->base + REG_STATUS_REG, I2C_DATARDY);
++	if (ret < 0)
++		dev_dbg(i2c->dev, "rx err(%d)\n", ret);
++
++	return ret;
++}
++
++static inline int rt_i2c_wait_tx_done(struct rt_i2c *i2c)
++{
++	int ret;
++
++	ret = poll_up_timeout(i2c->base + REG_STATUS_REG, I2C_SDOEMPTY);
++	if (ret < 0)
++		dev_dbg(i2c->dev, "tx err(%d)\n", ret);
++
++	return ret;
++}
++
++static int rt_i2c_master_xfer(struct i2c_adapter *adap, struct i2c_msg *msgs,
++		int num)
++{
++	struct rt_i2c *i2c;
++	struct i2c_msg *pmsg;
++	unsigned char addr;
++	int i, j, ret;
++	u32 cmd;
++
++	i2c = i2c_get_adapdata(adap);
++
++	for (i = 0; i < num; i++) {
++		pmsg = &msgs[i];
++		if (i == (num - 1))
++			cmd = 0;
++		else
++			cmd = NOSTOP_CMD;
++
++		dev_dbg(i2c->dev, "addr: 0x%x, len: %d, flags: 0x%x, stop: %d\n",
++				pmsg->addr, pmsg->len, pmsg->flags,
++				(cmd == 0)? 1 : 0);
++
++		if ((ret = rt_i2c_wait_idle(i2c)))
++			goto err_timeout;
++
++		if (pmsg->flags & I2C_M_TEN) {
++			rt_i2c_w32(i2c, I2C_CONF_DEFAULT, REG_CONFIG_REG);
++			addr = 0x78 | ((pmsg->addr >> 8) & 0x03);
++			rt_i2c_w32(i2c, addr & I2C_DEVADDR_MASK,
++					REG_DEVADDR_REG);
++			rt_i2c_w32(i2c, pmsg->addr & I2C_ADDR_MASK,
++					REG_ADDR_REG);
++		} else {
++			rt_i2c_w32(i2c, I2C_CONF_DEFAULT | I2C_ADDR_DIS,
++					REG_CONFIG_REG);
++			rt_i2c_w32(i2c, pmsg->addr & I2C_DEVADDR_MASK,
++					REG_DEVADDR_REG);
++		}
++
++		if (pmsg->len == 0)
++			cmd |= NODATA_CMD;
++		else
++			rt_i2c_w32(i2c, SET_BYTECNT(pmsg->len),
++					REG_BYTECNT_REG);
++
++		j = 0;
++		if (pmsg->flags & I2C_M_RD) {
++			cmd |= READ_CMD;
++			barrier();
++			rt_i2c_w32(i2c, cmd, REG_STARTXFR_REG);
++			do {
++				if ((ret = rt_i2c_wait_rx_done(i2c)))
++					goto err_timeout;
++				if (pmsg->len)
++					pmsg->buf[j] = rt_i2c_r32(i2c, 
++							REG_DATAIN_REG);
++				j++;
++			} while (j < pmsg->len);
++		} else {
++			do {
++				if (pmsg->len)
++					rt_i2c_w32(i2c, pmsg->buf[j],
++							REG_DATAOUT_REG);
++				if (j == 0) {
++					barrier();
++					rt_i2c_w32(i2c, cmd, REG_STARTXFR_REG);
++				}
++				if ((ret = rt_i2c_wait_tx_done(i2c)))
++					goto err_timeout;
++				j++;
++			} while (j < pmsg->len);
 +		}
 +	}
++	/* the return value is number of executed messages */
++	ret = i;
 +
-+	return i;
++	return ret;
++
++err_timeout:
++	device_reset(i2c->adap.dev.parent);
++	return ret;
 +}
 +
 +static u32 rt_i2c_func(struct i2c_adapter *a)
@@ -290,53 +343,70 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
 +};
 +
 +static const struct of_device_id i2c_rt_dt_ids[] = {
-+	{ .compatible = "ralink,rt2880-i2c", .data = (void *) I2C_TYPE_RALINK },
-+	{ .compatible = "mediatek,mt7628-i2c", .data = (void *) I2C_TYPE_MEDIATEK },
++	{ .compatible = "ralink,rt2880-i2c" },
 +	{ /* sentinel */ }
 +};
 +
 +MODULE_DEVICE_TABLE(of, i2c_rt_dt_ids);
 +
++static void rt_i2c_init(struct rt_i2c *i2c)
++{
++	device_reset(i2c->adap.dev.parent);
++
++	udelay(500);
++
++	rt_i2c_w32(i2c, I2C_DEVADLEN_7 | I2C_ADDRDIS, REG_CONFIG_REG);
++
++	rt_i2c_w32(i2c, CLKDIV_VALUE, REG_CLKDIV_REG);
++}
++
 +static int rt_i2c_probe(struct platform_device *pdev)
 +{
-+	struct resource *res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
++	struct resource *res;
++	struct rt_i2c *i2c;
++	struct i2c_adapter *adap;
 +	const struct of_device_id *match;
 +	int ret;
 +
 +	match = of_match_device(i2c_rt_dt_ids, &pdev->dev);
-+	hw_type = (int) match->data;
 +
++	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 +	if (!res) {
 +		dev_err(&pdev->dev, "no memory resource found\n");
 +		return -ENODEV;
 +	}
-+
-+	adapter = devm_kzalloc(&pdev->dev, sizeof(struct i2c_adapter), GFP_KERNEL);
-+	if (!adapter) {
++	printk("TEST");
++	i2c = devm_kzalloc(&pdev->dev, sizeof(struct rt_i2c), GFP_KERNEL);
++	if (!i2c) {
 +		dev_err(&pdev->dev, "failed to allocate i2c_adapter\n");
 +		return -ENOMEM;
 +	}
 +
-+	membase = devm_ioremap_resource(&pdev->dev, res);
-+	if (IS_ERR(membase))
-+		return PTR_ERR(membase);
++	i2c->dev = &pdev->dev;
 +
-+	strlcpy(adapter->name, dev_name(&pdev->dev), sizeof(adapter->name));
-+	adapter->owner = THIS_MODULE;
-+	adapter->nr = pdev->id;
-+	adapter->timeout = HZ;
-+	adapter->algo = &rt_i2c_algo;
-+	adapter->class = I2C_CLASS_HWMON | I2C_CLASS_SPD;
-+	adapter->dev.parent = &pdev->dev;
-+	adapter->dev.of_node = pdev->dev.of_node;
++	i2c->base = devm_ioremap_resource(&pdev->dev, res);
++	if (IS_ERR(i2c->base))
++		return PTR_ERR(i2c->base);
 +
-+	ret = i2c_add_numbered_adapter(adapter);
++	adap = &i2c->adap;
++	strlcpy(adap->name, dev_name(&pdev->dev), sizeof(adap->name));
++	adap->owner = THIS_MODULE;
++	adap->nr = pdev->id;
++	adap->timeout = HZ;
++	adap->algo = &rt_i2c_algo;
++	adap->class = I2C_CLASS_HWMON | I2C_CLASS_SPD;
++	adap->dev.parent = &pdev->dev;
++	adap->dev.of_node = pdev->dev.of_node;
++
++	i2c_set_adapdata(adap, i2c);
++
++	ret = i2c_add_numbered_adapter(adap);
 +	if (ret)
 +		return ret;
 +
-+	platform_set_drvdata(pdev, adapter);
++	platform_set_drvdata(pdev, i2c);
 +
-+	rt_i2c_init(adapter);
++	rt_i2c_init(i2c);
 +
 +	dev_info(&pdev->dev, "loaded\n");
 +
@@ -377,3 +447,4 @@ Signed-off-by: John Crispin <blogic@openwrt.org>
 +MODULE_DESCRIPTION("Ralink I2c host driver");
 +MODULE_LICENSE("GPL");
 +MODULE_ALIAS("platform:Ralink-I2C");
+
