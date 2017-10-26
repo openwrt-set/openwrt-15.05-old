@@ -990,11 +990,13 @@ endef
 define BuildFirmware/RX/squashfs
 	$(call BuildFirmware/R2/squashfs,$(1))
 	$(call BuildFirmware/R0/squashfs,$(1))
+	$(call BuildFirmware/S-TERRA/squashfs,$(1))
 endef
 
 define BuildFirmware/RX/initramfs
 	$(call BuildFirmware/R2/initramfs,$(1), irz_mt02)
 	$(call BuildFirmware/R0/initramfs,$(1), irz_mt00)
+	$(call BuildFirmware/S-TERRA/initramfs,$(1), s-terra)
 endef
 
 BuildFirmware/R0/initramfs=$(call BuildFirmware/CustomFlash/$(1),$(1),irz_mt00,R0,12255232)
