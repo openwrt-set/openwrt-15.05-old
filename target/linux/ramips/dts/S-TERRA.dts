@@ -170,10 +170,6 @@
 	nand {
 		#address-cells = <1>;
 		#size-cells = <1>;
-/*
-		compatible = "mt7620-nand";
-		reg = <0x10000800 256>;
-*/
 		compatible="mtk,mt7620-nand";
 	};
 };
