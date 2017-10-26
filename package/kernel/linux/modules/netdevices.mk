@@ -390,9 +390,7 @@ define KernelPackage/r8169
   SUBMENU:=$(NETWORK_DEVICES_MENU)
   TITLE:=RealTek RTL-8169 PCI Gigabit Ethernet Adapter kernel support
   DEPENDS:=@PCI_SUPPORT +kmod-mii +r8169-firmware
-  KCONFIG:=CONFIG_R8169 \
-    CONFIG_R8169_NAPI=y \
-    CONFIG_R8169_VLAN=n
+  KCONFIG:=CONFIG_R8169
   FILES:=$(LINUX_DIR)/drivers/net/ethernet/realtek/r8169.ko
   AUTOLOAD:=$(call AutoProbe,r8169)
 endef
