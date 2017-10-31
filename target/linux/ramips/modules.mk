@@ -16,7 +16,6 @@ define KernelPackage/sdhci-mt7620
 	CONFIG_MTK_MMC_CD_POLL=n
   FILES:= \
 	$(LINUX_DIR)/drivers/mmc/host/mtk-mmc/mtk_sd.ko
-  AUTOLOAD:=$(call AutoProbe,mtk_sd,1)
 endef
 
 $(eval $(call KernelPackage,sdhci-mt7620))
