@@ -1,0 +1,24 @@
+#!/bin/sh
+
+num=1
+for switch_vlan in $(uci -X show network | awk -F= '/\=switch_vlan$/{print $1}'); do
+    vid=$(uci -q get ${switch_vlan}.vid)
+    vlan=$(uci -q get ${switch_vlan}.vlan)
+    if [ -z "$vlan" ]; then
+        uci -q delete $switch_vlan
+        continue
+    fi
+
+    if [ -z "$vid" ]; then
+        uci set ${switch_vlan}.vid=$vlan
+        vid=$vlan
+    fi
+    uci set ${switch_vlan}.vlan=$num &> /dev/null
+
+    uci rename ${switch_vlan}="vlan_${vid}"
+    num=$(( num + 1 ))
+done
+
+uci commit network &> /dev/null
+
+exit 0

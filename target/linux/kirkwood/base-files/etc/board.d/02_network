@@ -1,0 +1,91 @@
+#!/bin/sh
+#
+# Copyright (C) 2012-2015 OpenWrt.org
+#
+
+. /lib/functions/system.sh
+. /lib/functions/uci-defaults.sh
+
+setup_interfaces()
+{
+	local board="$1"
+
+	case $board in
+	irz_ra01)
+		ucidef_add_switch "switch0" "0:lan" "4:wan" "6t@eth0"
+		;;
+	irz_mt00)
+		ucidef_add_switch "switch0" "0:lan" "6t@eth0"
+		;;
+	irz_mt02)
+		ucidef_add_switch "switch0" "1:lan" "2:lan" "3:lan" "4:lan" "6t@eth0"
+		;;
+	irz_kw04)
+		if [ -e "/tmp/sysinfo/sw_reverse" ]; then
+			ucidef_add_switch "switch0" "0:lan" "1:lan" "2:lan" "3:lan" "4:wan"  "5t@eth0" "6t@eth1"
+		else
+			ucidef_add_switch "switch0" "1:lan" "2:lan" "3:lan" "4:lan" "0:wan" "5t@eth0" "6t@eth1"
+		fi
+		;;
+	irz_kw44)
+		ucidef_add_switch "switch0" "0:lan" "1:lan" "2:lan" "3:lan" "4:wan"  "5t@eth0" "6t@eth1"
+		;;
+	*)
+		RT3X5X=`cat /proc/cpuinfo | egrep "(RT3.5|RT5350)"`
+		if [ -n "${RT3X5X}" ]; then
+			ramips_setup_rt3x5x_vlans
+		else
+			ucidef_set_interfaces_lan "eth0"
+		fi
+		;;
+	esac
+	json_select_object network
+		json_select_object "wan"
+			json_add_int auto 1
+			json_add_int metric 101
+			json_add_int defaultroute 1
+			json_add_int peerdns 1
+		json_select ..		
+	# _ucidef_set_interface wifiwan wlan0 dhcp
+	json_select ..
+}
+
+setup_macs()
+{
+	local board="$1"
+	local lan_mac=""
+	local wan_mac=""
+
+	case $board in
+	irz_ra01)
+		lan_mac=$(mtd_get_mac_binary factory 0x28)
+		wan_mac=$(mtd_get_mac_binary factory 0x2E)
+	;;
+	irz_mt00)
+		lan_mac=$(mtd_get_mac_binary factory 0x28)
+	;;
+	irz_kw04 | irz_kw44)
+		lan_mac=$(cat /sys/class/net/eth0/address)
+		wan_mac=$(cat /sys/class/net/eth1/address)
+	;;
+	*)
+		lan_mac=$(cat /sys/class/net/eth0/address)
+		wan_mac=$(macaddr_add "$lan_mac" 1)
+		;;
+
+	esac
+
+	[ -n "$lan_mac" ] && ucidef_set_interface_macaddr lan $lan_mac
+	[ -n "$wan_mac" ] && ucidef_set_interface_macaddr wan $wan_mac
+}
+
+board_config_update
+
+board=$(cat /tmp/sysinfo/board_name)
+
+setup_interfaces $board
+setup_macs $board
+
+board_config_flush
+
+exit 0

@@ -1,0 +1,77 @@
+
+set_port_config(){
+  local port=$1
+  local name=$2
+  local to_cpu=""
+  [ -z "$3" ] && to_cpu=0 || to_cpu=1
+
+  link="$(uci -q get network.port_${port}.link)"
+  [ -z "$link" ] && link="speed 0 duplex full"
+
+  uci set network.port_${port}=switch_port
+  uci set network.port_${port}.port=${port}
+  uci set network.port_${port}.name=${name}
+  uci set network.port_${port}.to_cpu=${to_cpu}
+  uci set network.port_${port}.link="$link"
+  uci set network.port_${port}.port_disabled=0
+  uci delete network.port_${port}.phydet
+  uci commit network
+}
+
+local board=$(cat /tmp/sysinfo/board_name)
+
+case "$board" in
+  "irz_kw04"|"r4")
+    set_port_config 6 ETH1 1
+    set_port_config 5 ETH0 1
+
+    if [ -e /tmp/sysinfo/sw_reverse ]; then
+      set_port_config 0 PORT0
+      set_port_config 1 PORT1
+      set_port_config 2 PORT2
+      set_port_config 3 PORT3
+      set_port_config 4 PORT4
+    else
+      set_port_config 4 LAN1
+      set_port_config 3 LAN2
+      set_port_config 2 LAN3
+      set_port_config 1 LAN4
+      set_port_config 0 WAN
+    fi
+  ;;
+
+  "irz_kw44"|"r44")
+    set_port_config 6 ETH1 1
+    set_port_config 5 ETH0 1
+
+    set_port_config 0 LAN1
+    set_port_config 1 LAN2
+    set_port_config 2 LAN3
+    set_port_config 3 LAN4
+    set_port_config 4 WAN
+  ;;
+
+  "irz_mt02"|"r2")
+    set_port_config 6 ETH0 1
+
+    set_port_config 1 PORT1
+    set_port_config 2 PORT2
+    set_port_config 3 PORT3
+    set_port_config 4 PORT4
+  ;;
+
+  "irz_mt00"|"r0")
+    set_port_config 6 ETH0 1
+
+    set_port_config 0 PORT0
+  ;;
+
+  *)
+    set_port_config 6 ETH0 1
+
+    set_port_config 0 LAN
+    set_port_config 4 WAN
+  ;;
+esac
+
+exit 0
