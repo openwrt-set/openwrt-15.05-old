@@ -16,7 +16,7 @@ PKG_RELEASE:=1
 PKG_REV:=49ec6efbdac4819033d34f08927d795f83a3932d
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=git://git.openwrt.org/project/uci.git
+PKG_SOURCE_URL:=git://github.com/openwrt-set/uci.git
 PKG_SOURCE_SUBDIR:=uci-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE_PROTO:=git

@@ -5,7 +5,7 @@
 # See /LICENSE for more information.
 #
 
-OPENWRT_GIT = http://git.openwrt.org
+OPENWRT_GIT = http://github.com/openwrt-set
 
 DOWNLOAD_RDEP=$(STAMP_PREPARED) $(HOST_STAMP_PREPARED)
 

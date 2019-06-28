@@ -11,7 +11,7 @@ PKG_VERSION:=2015-06-01
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=http://git.openwrt.org/project/iwinfo.git
+PKG_SOURCE_URL:=http://github.com/openwrt-set/iwinfo.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=d22c64c2eb6db3db6aaac5ae270acd63ed088a20
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz

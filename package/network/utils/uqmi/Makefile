@@ -5,7 +5,7 @@ PKG_VERSION:=2016-12-19
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://git.openwrt.org/project/uqmi.git
+PKG_SOURCE_URL:=git://github.com/openwrt-set/uqmi.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=8ceeab690d8c6f1e3afbd4bcaee7bc2ba3fbe165
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz

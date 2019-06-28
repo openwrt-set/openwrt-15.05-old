@@ -13,7 +13,7 @@ PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=git://git.openwrt.org/project/mdnsd.git
+PKG_SOURCE_URL:=git://github.com/openwrt-set/mdnsd.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=258039240037c81a77cf92517f5ba22fd0a2601d
 
